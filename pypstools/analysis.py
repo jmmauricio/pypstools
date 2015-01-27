@@ -1,6 +1,6 @@
-""" Tools for analysing LTI systems.
+""" Tools for analysing power systems.
 
-(c) 2014 Mark W. Mueller
+(c) 2015 Juan Manuel Mauricio
 """
 
 import numpy as np
