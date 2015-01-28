@@ -10,6 +10,187 @@ import scipy.linalg
 import analysis, publisher
 
 
+# -*- coding: cp1252 -*-
+#[dyntools_demo.py]  09/22/100    Demo for using functions from dyntools module
+# ====================================================================================================
+'''
+'dyntools' module provide access to data in PSS(R)E Dynamic Simulation Channel Output file.
+
+
+'''
+import yaml 
+import os, sys
+import pickle
+import numpy as np
+import matplotlib.pyplot as plt
+from pypstools.tools.name2chan import name2chan
+from pypstools.publisher.plot_tools import g_colors
+import pypstools.publisher.rst_basic as rst
+import h5py
+# =============================================================================================
+# Get installed location of latest PSS(R)E version
+pssedir = r'C:\Program Files\PTI\PSSE33'
+#pssedir = r'C:\Program Files\PTI\PSSEUniversity33'
+
+# =============================================================================================
+# Files Used
+case_name =  'ieee118_v33_modif' 
+print os.getcwd()
+sys.path.append(os.path.join(os.getcwd(),'..','..'))  
+pssbindir  = os.path.join(pssedir,'PSSBIN')
+casedir = os.path.join(os.getcwd(),'..','system')
+#casedir=r'E:\jmmauricio\Documents\public\jmmauricio6\RESEARCH\psse_models\test\pvsyn1\data\inf_pvsync'
+sys.path.append(os.path.join(os.getcwd(),'..'))
+libraryname = os.path.join(casedir,'dsusr.dll')
+rawfile    = os.path.join(casedir,case_name + '.raw')
+dyrfile    = os.path.join(casedir,case_name + '.dyr')
+dyafile_avr= os.path.join(casedir,case_name + '_avr.dya')
+dyafile_gov= os.path.join(casedir,case_name + '_gov.dya')
+dyafile_pss= os.path.join(casedir,case_name + '_pss.dya')
+xsfile = os.path.join(casedir,case_name + '_xs.txt')
+savfile    = os.path.join(casedir,case_name + '.sav')
+savdynfile = os.path.join(casedir,case_name + '_dyn.sav')
+snpfile    = os.path.join(casedir,case_name + '.snp')
+outfile1   = os.path.join(casedir,case_name + '.out')
+outfile2   = os.path.join(casedir,case_name + '.out')
+outfile3   = os.path.join(casedir,case_name + '.out')
+prgfile    = os.path.join(casedir,'dyntools_demo_progress.txt')
+chnffile = os.path.join(casedir,case_name + '.pkl') 
+lsa_file  = os.path.join(casedir,case_name + '.lsa')
+lsa_dat  = os.path.join(casedir,case_name + '.dat')
+ltifile = os.path.join(casedir,'sys_abcd_f12.pkl')
+config_file = 'configuration.pkl'
+tests_config_file = os.path.join(casedir,'tests.pkl')
+test_out = os.path.join(casedir,'test_out.hdf5')
+# =============================================================================================
+
+
+# =============================================================================================
+# Check if running from Python Interpreter
+exename = sys.executable
+p, nx   = os.path.split(exename)
+nx      = nx.lower()
+if nx in ['python.exe', 'pythonw.exe']:
+    os.environ['PATH'] = pssbindir + ';' + os.environ['PATH']
+    sys.path.insert(0,pssbindir)
+
+
+import dyntools
+
+import redirect
+redirect.psse2py()    
+import psspy
+_i = psspy._i
+_f = psspy._f
+
+import psspy
+ierr = psspy.psseinit(buses=80000)  # choose here bus numbers you want
+
+psspy.lines_per_page_one_device(1,90)
+psspy.progress_output(2,prgfile,[0,0])
+
+psspy.read(0,rawfile)
+
+
+S_b = 100.00
+
+ierr = psspy.fnsl([0,0,0,1,1,0,99,0])
+
+
+# Se guarda la solucion
+psspy.save(savfile)
+
+
+# Se convierten las cargas y los generadores para la simulacion dinamica
+psspy.cong(0)
+psspy.conl(0,1,1,[0,0],[ 100.0,0.0,0.0, 100.0])
+psspy.conl(0,1,2,[0,0],[ 100.0,0.0,0.0, 100.0])
+psspy.conl(0,1,3,[0,0],[ 100.0,0.0,0.0, 100.0])
+
+# se guarda la solucion .sav para simulacion dinamica
+psspy.save(savdynfile)
+#ierr = psspy.addmodellibrary(libraryname)
+
+
+# se cargan los datos dinamicos
+psspy.dyre_new([1,1,1,1],dyrfile,"","","")
+
+
+datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
+gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+
+datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
+gen_hydro_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+
+
+datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
+gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+
+vip_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
+   
+# se definen las barras a considerar
+psspy.bsys(0,0,[ 13.8, 345.],0,[],len(vip_buses),vip_buses,0,[],0,[])
+ierr = psspy.delete_all_plot_channels()
+# se definen los canales
+all_buses = 0
+psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,2,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,3,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,7,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,12,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,13,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,16,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,10,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,11,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,25,0])
+psspy.chsb(0,all_buses,[-1,-1,-1,1,26,0])
+#ierr, L_vsc_1 = psspy.mdlind(7, '1', 'GEN', 'VAR')
+#ierr, L_vsc_2 = psspy.mdlind(8, '1', 'GEN', 'VAR')
+#        
+#psspy.var_channel([-1,L_vsc_1],)
+#psspy.var_channel([-1,L_vsc_1+1],)
+#psspy.var_channel([-1,L_vsc_2],)
+#psspy.var_channel([-1,L_vsc_2+1],)
+# se guarda todo en .snp
+psspy.snap([-1,-1,-1,-1,-1],snpfile)
+
+# se inicializa el sistema
+psspy.strt(0,outfile1)
+
+def name2chan(chnf, varname, busnumber, bus_to=0):
+
+    '''
+    SPD
+    FREQ
+    ETRM
+    PMEC
+    VAR 5
+    VAR 6
+    '''
+
+    if type(chnf)==type(()):
+        chan_dict = chnf[1]
+        #print type(chnf)
+
+    else:       
+        chan_dict = chnf.get_data()[1]
+
+    for it in range(len(chan_dict)-1):
+
+        var_name = chan_dict[it+1].split()[0]
+
+        #print chan_dict
+        bus_number = int(chan_dict[it+1].split()[1].split('[')[0])
+        
+        if varname==var_name and busnumber==bus_number:
+            #print str(it+1) + ' : ' + chan_dict[it+1]
+            return it+1
+
+        pass
+
+
+
+
 class test:
     '''Class to simulate tests with PSS/E
 

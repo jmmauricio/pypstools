@@ -8,7 +8,7 @@ import scipy.linalg
 import scipy.integrate
 import h5py
 
-def dict2h5(file_name, dict_in, dict_deepness=3):  
+def dict_to_h5(file_name, dict_in, dict_deepness=3):  
     ''' Saves a dictionary to hdf5 file
 
     >>> a=2
@@ -23,17 +23,64 @@ def dict2h5(file_name, dict_in, dict_deepness=3):
     '''        
     f = h5py.File(file_name,'w')
     
-    if deepness==3:
-        for test in data_dict:
-            print test
+    if dict_deepness==3:
+        for test in dict_in:
+
             grp = f.create_group(test)
-            for group in data_dict[test]:
-                print group
+            for group in dict_in[test]:
+
                 sub_grp = grp.create_group(group)
-                for data in data_dict[test][group]:
+                for data in dict_in[test][group]:
                     var_name = data
-                    var_values =  data_dict[test][group][data]
-                    print var_name, var_values
+                    var_values =  dict_in[test][group][data]
+
                     sub_grp.create_dataset(var_name, data=var_values)
                 
         f.close()
+
+def h5_to_dict(file_name, dict_deepness=3):  
+    ''' Saves a dictionary to hdf5 file
+
+    >>> a=2
+    >>> b=3
+    >>> c=np.array([1,2,3,4])
+    >>> t=np.array([.1,.2,.3,.4])
+    >>> data_dict = {'test_1':{'sys':{'t':t},'bus_1':{'a':2,'b':3, 'c':c},'bus_2':{'a':2,'b':3, 'c':2*c}},
+                     'test_2':{'sys':{'t':t},'bus_1':{'a':2,'b':3, 'c':c},'bus_2':{'a':2,'b':3, 'c':2*c}}}
+    >>> file_name = 'foo.hdf5'
+    >>> dict_to_h5(file_name, data_dict) 
+
+    '''        
+    h5 = h5py.File(file_name,'r')
+    
+    if dict_deepness==3:
+        for test in dict_in:
+
+            grp = f.create_group(test)
+            for group in dict_in[test]:
+
+                sub_grp = grp.create_group(group)
+                for data in dict_in[test][group]:
+                    var_name = data
+                    var_values =  dict_in[test][group][data]
+
+                    sub_grp.create_dataset(var_name, data=var_values)
+                
+        f.close()
+
+        return dict_out
+def test_tools_dict2h5():
+    a=2
+    b=3
+    c=np.array([1,2,3,4])
+    t=np.array([.1,.2,.3,.4])
+    data_dict = {'test_1':{'sys':{'t':t},'bus_1':{'a':2,'b':3, 'c':c},'bus_2':{'a':2,'b':3, 'c':2*c}},
+                     'test_2':{'sys':{'t':t},'bus_1':{'a':2,'b':3, 'c':c},'bus_2':{'a':2,'b':3, 'c':2*c}}}
+    
+    file_name = 'foo.hdf5'
+    dict_to_h5(file_name, data_dict) 
+
+
+if __name__=="__main__":
+
+    test_tools_dict2h5()
