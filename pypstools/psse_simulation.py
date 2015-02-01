@@ -7,7 +7,8 @@ from __future__ import division, print_function
 import numpy as np
 import scipy.linalg
 
-import analysis, publisher
+import analysis
+import hickle
 
 
 # -*- coding: cp1252 -*-
@@ -35,18 +36,19 @@ pssedir = r'C:\Program Files\PTI\PSSE33'
 # =============================================================================================
 # Files Used
 case_name =  'ieee118_v33_modif' 
-print os.getcwd()
+print(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(),'..','..'))  
 pssbindir  = os.path.join(pssedir,'PSSBIN')
-casedir = os.path.join(os.getcwd(),'..','system')
+raw_dyr_dir = os.path.join(r'E:\jmmauricio\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\system')
+casedir = os.path.join(r'E:\jmmauricio\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\jmm')
 #casedir=r'E:\jmmauricio\Documents\public\jmmauricio6\RESEARCH\psse_models\test\pvsyn1\data\inf_pvsync'
 sys.path.append(os.path.join(os.getcwd(),'..'))
 libraryname = os.path.join(casedir,'dsusr.dll')
-rawfile    = os.path.join(casedir,case_name + '.raw')
-dyrfile    = os.path.join(casedir,case_name + '.dyr')
-dyafile_avr= os.path.join(casedir,case_name + '_avr.dya')
-dyafile_gov= os.path.join(casedir,case_name + '_gov.dya')
-dyafile_pss= os.path.join(casedir,case_name + '_pss.dya')
+rawfile    = os.path.join(raw_dyr_dir,case_name + '.raw')
+dyrfile    = os.path.join(raw_dyr_dir,case_name + '.dyr')
+dyafile_avr= os.path.join(raw_dyr_dir,case_name + '_avr.dya')
+dyafile_gov= os.path.join(raw_dyr_dir,case_name + '_gov.dya')
+dyafile_pss= os.path.join(raw_dyr_dir,case_name + '_pss.dya')
 xsfile = os.path.join(casedir,case_name + '_xs.txt')
 savfile    = os.path.join(casedir,case_name + '.sav')
 savdynfile = os.path.join(casedir,case_name + '_dyn.sav')
@@ -61,7 +63,7 @@ lsa_dat  = os.path.join(casedir,case_name + '.dat')
 ltifile = os.path.join(casedir,'sys_abcd_f12.pkl')
 config_file = 'configuration.pkl'
 tests_config_file = os.path.join(casedir,'tests.pkl')
-test_out = os.path.join(casedir,'test_out.hdf5')
+tests_out = os.path.join(casedir,'tests_out.hdf5')
 # =============================================================================================
 
 
@@ -116,18 +118,18 @@ psspy.save(savdynfile)
 psspy.dyre_new([1,1,1,1],dyrfile,"","","")
 
 
-datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
+datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
 gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
 
-datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
+datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
 gen_hydro_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
 
 
-datas = np.genfromtxt('tgov_hygov_base.tsv', skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
+datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
 gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
 
 vip_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
-   
+#vip_buses = [26,10,87,111,89]  
 # se definen las barras a considerar
 psspy.bsys(0,0,[ 13.8, 345.],0,[],len(vip_buses),vip_buses,0,[],0,[])
 ierr = psspy.delete_all_plot_channels()
@@ -218,7 +220,7 @@ class test:
         psspy.dynamics_solution_param_2([_i,_i,_i,_i,_i,_i,_i,_i],[_f,_f, self.dt,_f,_f,_f,_f,_f])
 
 	# runs without perturbation until t=1s
-        psspy.run(0, self.t_pert,1000,10,100)
+        psspy.run(0, self.t_pert,100,1,1)
 
 	# for v_ref changes
         if self.data['test_type']=='v_ref_change':
@@ -229,7 +231,7 @@ class test:
             ierr = psspy.increment_vref(ibus, id, newval)
 
             t_end = self.t_end
-            psspy.run(0, t_end,1000,100,100)
+            psspy.run(0, t_end,100,10,10)
 
         
         if self.data['test_type']=='freq_change':
@@ -243,7 +245,7 @@ class test:
                 
 
                 
-        if self.data[self.data['test_type']]=='p_ref_change':      
+        if self.data['test_type']=='p_ref_change':      
             ierr, L = psspy.mdlind(13, '1', 'GEN', 'VAR')
             L_var = 1
             psspy.change_var(L+L_var-1, 100.0)
@@ -310,7 +312,7 @@ class test:
        
     def outfile2dict(self):        
         chnf = dyntools.CHNF(outfile1)
-        print chnf.get_data()[1]
+        print(chnf.get_data()[1])
         t = np.array(chnf.get_data()[2]['time'])
         self.t = t
         py2mat_dict = {}
@@ -510,24 +512,28 @@ Dp_small = 50
 #         
 tests = [{'id':'p_ref_vsc_1_up', 'type':'freq_change',   'change_var':'Dp_1', 'change':100.0}]
 tests = [{'id':'p_ref_vsc_1_up', 'rst_title':'p_ref_vsc_1_up', 'type':'q_ref_change',   'change_var':'Dp_1', 'change':100.0, 'devices':{'vsc1':10.0}}]
-tests = [{'test_id':'v_ref_change_26_up', 'rst_title':'v_ref_change_26_up', 'type':'v_ref_change',   'gen_bus':1, 'gen_id':'1', 'change':0.1}]
+tests = [{'test_id':'v_ref_change_111_up', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
 
 
 data_dict = {}        
 
 rst_str_tests = ''
-
+tests_results = {}
 
 
 
 for item in  tests:
     instance_name = "test_{:s}".format(item['test_id'])
-    print instance_name
-    exec(instance_name + ' = test()')
+    print(instance_name)
+    exec(instance_name + ' = test(psspy)')
     exec(instance_name + ".data = item")  
     exec(instance_name + ".run()")
     exec(instance_name + ".outfile2dict()")
-exec(instance_name + ".draw()")
+    to_exec = "tests_results.update({'" + instance_name + "':" + instance_name + ".data_dict})"
+    print(to_exec)
+    exec(to_exec)
+    
+hickle.dump(tests_results, tests_out)
 
 
 

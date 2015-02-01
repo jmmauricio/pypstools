@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
 from StringIO import StringIO
 import json
+import os
 
-
-case_dir = '/home/jmmauricio-m/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
+case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
 
 svg_dir = os.path.join(case_dir,'doc','svg')
 png_dir = os.path.join(case_dir,'doc','png')
@@ -29,9 +29,10 @@ datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, 
 gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
 
 vip_gen_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
+#vip_gen_buses = [26,10,87,111,89,61,32]  
+#vip_gen_buses = [26,10] 
 
-
-def interactive_svg(plt,svg_file,ids, curves, distance_factor=0.8):   
+def interactive_svg(plt,svg_file,ids, ax, distance_factor=0.8):   
     
     # Apparently, this `register_namespace` method works only with
     # python 2.7 and up and is necessary to avoid garbling the XML name
@@ -124,9 +125,11 @@ def interactive_svg(plt,svg_file,ids, curves, distance_factor=0.8):
     #svg_root.set(onload="init(evt)")
     tree.set( 'onload',"init(evt)")
     
+    print(ids)
     
-    for id_item, curve in zip(ids,curves.get_lines()):
-        
+    for id_item, curve in zip(ids,ax.get_lines()):
+#        line = curve.get_lines()
+#        print(line)
         curve.set_gid(id_item)
         el = xmlid[id_item]
         el.set('onmousemove', "ShowTooltip(evt, '{:s}')".format(id_item))
@@ -169,6 +172,7 @@ class publish:
             fig_p_gen = plt.figure()
             fig_q_gen = plt.figure()
             fig_v = plt.figure()
+#            fig_w = plt.figure(figsize=(15,10))
             fig_w = plt.figure()
             fig_p_load = plt.figure()
             fig_q_load = plt.figure()
@@ -213,10 +217,11 @@ class publish:
 
 
         vip_gen_bus_names = ['bus_{:d}'.format(item) for item in vip_gen_buses]
-        bus_names = ['bus_{:d}'.format(item) for item in [1]]
+        
+        bus_names = ['bus_{:d}'.format(item) for item in vip_gen_buses]
 
   
-        ids = []
+        ids = vip_gen_bus_names
         speed_coi = self.data_dict[test_id][bus_names[0]]['speed'] 
         for item_bus, item_number in zip(vip_gen_bus_names,vip_gen_buses):
 
@@ -230,36 +235,43 @@ class publish:
 
             # generators reactive power:
             ax_volt.plot(self.t, self.data_dict[test_id][item_bus]['volt'],label='$\sf v_{{{:d}}}$'.format(item_number))   
-            curve_speed = ax_speed.plot(self.t, (self.data_dict[test_id][item_bus]['speed']),label='$\sf \omega_{{{:d}}}$'.format(item_number))   
+            curve_speed = ax_speed.plot(self.t, (self.data_dict[test_id][item_bus]['speed']),label='$\sf \omega_{{{:d}}}$'.format(item_number), lw=1)   
     #curve_speed.set_gid(item_id)
 
-        for item_curve, item_id in zip(ax_volt.get_lines(),bus_names):
-            item_curve.set_gid(item_id)
-            ids += [item_id]            
+#        for item_curve, item_id in zip(ax_volt.get_lines(),bus_names):
+#            item_curve.set_gid(item_id)
+#            ids += [item_id]            
+#        ax_speed.legend(loc='best')
+        
+#        for item_curve, item_id in zip(ax_speed.get_lines(),bus_names):
+#            item_curve.set_gid(item_id)
+#            ids += [item_id]
+#ids = ['G1','G200']
 
-        for item_curve, item_id in zip(ax_speed.get_lines(),bus_names):
-            item_curve.set_gid(item_id)
-            ids += [item_id]
+#        ids = ['bus_26','bus_10'] 
 
-
+        for id_item, line in zip(ids,ax_speed.get_lines()):
             
+            line.set_gid(id_item)
+
+
         figs_name_list = ['p_gen', 'q_gen','v','w']
         figs_list = [fig_p_gen,fig_q_gen,fig_v,fig_w]
         
         for item_fig_name, item_fig in zip(figs_name_list, figs_list):
             
-            fig_name = '{:s}_{:s}_{:s}.png'.format(self.test_id,item_fig,data_sim)
+            fig_name = '{:s}_{:s}_{:s}.png'.format(self.test_id,item_fig_name,data_sim)
             fig_png_path = os.path.join(png_dir,fig_name)        
-            fig_name = '{:s}_{:s}_{:s}.svg'.format(self.test_id,item_fig,data_sim)
+            fig_name = '{:s}_{:s}_{:s}.svg'.format(self.test_id,item_fig_name,data_sim)
             fig_svg_path = os.path.join(svg_dir,fig_name)
             
             item_fig.savefig(fig_png_path)      
             item_fig.savefig(fig_svg_path) 
-
-
             
-        interactive_svg(plt,'hola.svg',ids, curve_speed, distance_factor=0.8)            
-
+        
+        interactive_svg(fig_w,fig_svg_path,ids, ax_speed, distance_factor=0.8) 
+            
+            
 ##        ax_speed.plot(self.t, (speed_coi),label='$\sf \omega_{{{:d}}}$'.format(item_number))   
 #
 ###        ax_speed.set_ylim((48.5,51.5)) *50.0+50.0
@@ -279,7 +291,7 @@ class publish:
 ###            ax_pq_load.plot(self.t, self.data_dict[item_bus]['p_load']*100.0,label='$\sf p_{{l{:d}}}$'.format(item_number))            
 ###            ax_pq_load.plot(self.t, self.data_dict[item_bus]['q_load']*100.0,label='$\sf q_{{l{:d}}}$'.format(item_number))   
 ###
-###        ax_pq_load.legend(loc='best')
+        
 #
 #
 #
@@ -386,6 +398,7 @@ if __name__ == '__main__':
     
     pub = publish()
 
-    
-    pub.hdf5file = r'/home/jmmauricio-m/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/test_v_ref_change_26_up.hdf5'
-    pub.plot_pq_w_a_large('test_v_ref_change_26_up')
+    casedir = r'/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
+    tests_out = os.path.join(casedir,'tests_out.hdf5')    
+    pub.hdf5file = tests_out
+    pub.plot_pq_w_a_large('test_v_ref_change_111_up')
