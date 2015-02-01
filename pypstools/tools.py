@@ -69,6 +69,27 @@ def h5_to_dict(file_name, dict_deepness=3):
         f.close()
 
         return dict_out
+
+def loc2geojson():
+    
+    loc_path = '/home/jmmauricio-m/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/gis/location.loc'
+    loc_file = open(loc_path, 'r')
+    
+    reading_buses = False
+    for row in loc_file.readlines():
+#        print(len(row))
+
+        if (reading_buses == True) and (row[0:1] == ' '):
+            reading_buses = False
+        
+        if reading_buses == True:
+            print((row))            
+        
+        if row[0:4]=='CART':
+            reading_buses = True        
+        
+    
+    
 def test_tools_dict2h5():
     a=2
     b=3
@@ -83,4 +104,5 @@ def test_tools_dict2h5():
 
 if __name__=="__main__":
 
-    test_tools_dict2h5()
+    #test_tools_dict2h5()
+    loc2geojson()
