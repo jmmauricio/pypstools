@@ -1,0 +1,29 @@
+# YAML
+- name: figura 1
+  file: 'pq_gen_zoom_1.svg'
+  axes:
+  - variable: p_gen
+    element_type: sym
+    elements: [sym_26, sym_110, sym_111]
+    legends: ['$p_{26}$','$p_{110}$','$p_{111}$']
+    ylabel: Active powers (MW)
+  - variable: q_gen
+    element_type: sym
+    elements: [sym_26, sym_110, sym_111]
+    legends: ['$q_{26}$','$q_{110}$','$q_{111}$']
+    ylabel: Reactive powers (Mvar)
+    xlabel: Time (s)
+
+- name: figura 2
+  file: 'speeds_zoom_1.svg'
+  axes:
+  - variable: speed
+    element_type: sym
+    elements: [sym_26, sym_110, sym_111]
+    legends: ['$\omega_{26}$','$\omega_{110}$','$\omega_{111}$']
+    xlabel: Time (s)
+    ylabel: Speeds (Hz)
+    scale: 50.0
+    ylimits: [-0.0006,0.001]
+    
+  

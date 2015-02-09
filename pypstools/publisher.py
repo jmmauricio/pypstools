@@ -1,4 +1,4 @@
-""" Tools for plotting and publishing power system simulations ans analysis results.
+""" Tools for plotting and publishing power system simulations and analysis results.
 
 (c) 2015 Juan Manuel Mauricio
 """
@@ -8,29 +8,14 @@ import numpy as np
 import scipy.linalg
 import hickle
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import xml.etree.ElementTree as ET
 from StringIO import StringIO
 import json
 import os
-
-case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
-
-svg_dir = os.path.join(case_dir,'doc','svg')
-png_dir = os.path.join(case_dir,'doc','png')
-
-datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
-gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
-
-datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
-gen_hydro_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+import yaml
 
 
-datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
-gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
-
-vip_gen_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
-#vip_gen_buses = [26,10,87,111,89,61,32]  
-#vip_gen_buses = [26,10] 
 
 def interactive_svg(plt,svg_file,ids, ax, distance_factor=0.8):   
     
@@ -92,6 +77,7 @@ def interactive_svg(plt,svg_file,ids, ax, distance_factor=0.8):
         }
         .tooltip{
     	font-size: 12px;
+     font-family: Arial;
         }
         .tooltip_bg{
     	fill: white;
@@ -124,9 +110,7 @@ def interactive_svg(plt,svg_file,ids, ax, distance_factor=0.8):
     #svg_root = xmlid['svg']
     #svg_root.set(onload="init(evt)")
     tree.set( 'onload',"init(evt)")
-    
-    print(ids)
-    
+   
     for id_item, curve in zip(ids,ax.get_lines()):
 #        line = curve.get_lines()
 #        print(line)
@@ -144,8 +128,72 @@ class publish:
 
     def __init__(self):
         
-        self.hdf5file = ''        
-        pass
+        self.hdf5file = '' 
+        self.freq_base = 60.0
+        self.lw = 2.0
+        self.legends = True
+        self.png_dir = '.'
+        self.svg_dir = '.'
+        
+        
+    def publisher(self, yaml_file):
+        
+        ya = yaml.load(open(yaml_file,'r').read())
+
+        figures = []
+        
+        for item_fig in ya:            
+
+            figure = plt.figure()
+            figures += [figure]
+            
+            n_axes = len(item_fig['axes'])
+            it_axe = 0
+            for item_axe in item_fig['axes']:
+
+                it_axe += 1
+                axe = figure.add_subplot(n_axes,1,it_axe)
+                
+                if item_axe.has_key('scale'): scale = item_axe['scale'] 
+                else: scale=1.0
+
+                if item_axe.has_key('offset'): offset = item_axe['offset'] 
+                else: offset=0.0                   
+                    
+                for item_curve_group in item_axe['curves']:
+                    
+                    h_tests = hickle.load(item_curve_group['file'])
+                    
+                    if not h_tests.has_key(item_curve_group['test_id']):
+                        print('{:s} Test id is not availabe'.format(item_curve_group['test_id']))
+                        print("Availables id's are:")
+                        print(h_tests.keys())
+                        return  
+                    
+                    
+                    h = h_tests[item_curve_group['test_id']]
+                            
+                    for (item_curve, item_legend) in zip(item_curve_group['elements'], item_curve_group['legends']):
+
+                        t = h['sys']['time']
+                        var = offset + scale*h[item_curve_group['element_type']][item_curve][item_curve_group['variable']]
+                        axe.plot(t,var, label=item_legend)
+                        
+                axe.set_xlim((t[0], t[-1]))
+                axe.legend(loc='best')
+                axe.grid(True)
+                
+                axe.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+
+                if item_axe.has_key('xlabel'): axe.set_xlabel(item_axe['xlabel']) 
+                if item_axe.has_key('ylabel'): axe.set_ylabel(item_axe['ylabel']) 
+                if item_axe.has_key('ylimits'): axe.set_ylim(item_axe["ylimits"])
+            plt.savefig(item_fig['file']) 
+            
+            
+
+        return figures
+
 
     def plot_pq_w_a_large(self, test_id, individual_figure=True, data_sim = ''):
         '''Plots curves of:
@@ -163,8 +211,20 @@ class publish:
         self.test_id = test_id
         self.data_dict =  hickle.load(self.hdf5file)
         
-        self.t = self.data_dict[test_id]['sys']['t']
+        if not self.data_dict.has_key(test_id):
+            print('{:s} Test id is not availabe'.format(test_id))
+            print("Availables id's are:")
+            print(self.data_dict.keys())
+            return 
         
+        
+        
+        self.t = self.data_dict[test_id]['sys']['time']
+        
+        
+        vip_gen_buses = self.vip_gen_buses
+        png_dir = self.png_dir
+        svg_dir = self.svg_dir 
         
     
         if individual_figure==True:
@@ -173,7 +233,7 @@ class publish:
             fig_q_gen = plt.figure()
             fig_v = plt.figure()
 #            fig_w = plt.figure(figsize=(15,10))
-            fig_w = plt.figure()
+            fig_w = plt.figure(figsize=(12,8))
             fig_p_load = plt.figure()
             fig_q_load = plt.figure()
             
@@ -212,6 +272,19 @@ class publish:
             ax_speed.set_xlim((self.t[0], self.t[-1]))
             ax_speed.grid(True)
             ax_speed.set_xlabel(u'Time (s)')
+            from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+            majorFormatter = FormatStrFormatter('%2.3f')
+            ax_speed.yaxis.set_major_formatter(majorFormatter)
+            
+            axes_list = [ax_p_gen,ax_q_gen,ax_volt,ax_speed]
+
+            for item_axe in axes_list:
+                # Shrink current axis by 20%
+                box = ax_speed.get_position()
+                item_axe.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+                
+                
+
 
 
 
@@ -219,23 +292,39 @@ class publish:
         vip_gen_bus_names = ['bus_{:d}'.format(item) for item in vip_gen_buses]
         
         bus_names = ['bus_{:d}'.format(item) for item in vip_gen_buses]
-
+        sym_names = ['bus_{:d}'.format(item) for item in vip_gen_buses]
   
         ids = vip_gen_bus_names
-        speed_coi = self.data_dict[test_id][bus_names[0]]['speed'] 
-        for item_bus, item_number in zip(vip_gen_bus_names,vip_gen_buses):
+#        speed_coi = self.data_dict[test_id][bus_names[0]]['speed'] 
+        for item_sym in self.data_dict[test_id]['sym']['sym_speed_list']:
 
+            item_number = int(item_sym.split('_')[1])
+            
             # generators active power:
-            ax_p_gen.plot(self.t, self.data_dict[test_id][item_bus]['p_gen']*100.0,
-                      label='$\sf p_{{g{:d}}}$'.format(item_number))          
+            ax_p_gen.plot(self.t, self.data_dict[test_id]['sym'][item_sym]['p_gen']*100.0,
+                      label='$\sf p_{{g{:d}}}$'.format(item_number), lw=self.lw)          
   
             # generators reactive power:
-            ax_q_gen.plot(self.t, self.data_dict[test_id][item_bus]['q_gen']*100.0,
-                      label='$\sf q_{{g{:d}}}$'.format(item_number))   
+            ax_q_gen.plot(self.t, self.data_dict[test_id]['sym'][item_sym]['q_gen']*100.0,
+                      label='$\sf q_{{g{:d}}}$'.format(item_number), lw=self.lw)   
 
-            # generators reactive power:
-            ax_volt.plot(self.t, self.data_dict[test_id][item_bus]['volt'],label='$\sf v_{{{:d}}}$'.format(item_number))   
-            curve_speed = ax_speed.plot(self.t, (self.data_dict[test_id][item_bus]['speed']),label='$\sf \omega_{{{:d}}}$'.format(item_number), lw=1)   
+            number = int(item_sym.split('_')[1])
+            ax_speed.plot(self.t, ((self.data_dict[test_id]['sym'][item_sym]['speed']+1.0)*self.freq_base),
+                          label='$\sf \omega_{{{:d}}}$'.format(item_number), lw=self.lw)  
+                          
+                          
+            if self.legends == True:
+                for item_axe in axes_list:
+                    ax_speed.legend(loc='center left', ncol=2, bbox_to_anchor=(1, 0.5))
+
+        for item_bus in self.data_dict[test_id]['bus']['bus_u_list']:
+            # voltages:
+            ax_volt.plot(self.t, self.data_dict[test_id]['bus'][item_bus]['u'],
+                         label='$\sf v_{{{:d}}}$'.format(item_number), lw=self.lw) 
+                         
+                         
+                         
+
     #curve_speed.set_gid(item_id)
 
 #        for item_curve, item_id in zip(ax_volt.get_lines(),bus_names):
@@ -250,13 +339,19 @@ class publish:
 
 #        ids = ['bus_26','bus_10'] 
 
-        for id_item, line in zip(ids,ax_speed.get_lines()):
-            
-            line.set_gid(id_item)
-
-
+        
         figs_name_list = ['p_gen', 'q_gen','v','w']
         figs_list = [fig_p_gen,fig_q_gen,fig_v,fig_w]
+
+#        figs_name_list = ['w']
+#        figs_list = [fig_w]
+        
+        # assignation of an id for each curve        
+        for item_axe in axes_list:
+            for id_item, curve in zip(ids,item_axe.get_lines()):
+                curve.set_gid(id_item)
+                   
+
         
         for item_fig_name, item_fig in zip(figs_name_list, figs_list):
             
@@ -268,8 +363,8 @@ class publish:
             item_fig.savefig(fig_png_path)      
             item_fig.savefig(fig_svg_path) 
             
-        
-        interactive_svg(fig_w,fig_svg_path,ids, ax_speed, distance_factor=0.8) 
+            interactive_svg(item_fig,fig_svg_path,ids, item_fig.axes[0], distance_factor=0.8) 
+ 
             
             
 ##        ax_speed.plot(self.t, (speed_coi),label='$\sf \omega_{{{:d}}}$'.format(item_number))   
@@ -279,7 +374,7 @@ class publish:
 ###        ax_p.set_ylim((2,8))
 ###        ax_q.set_ylim((-4,8))
 #    
-#ax_p.legend(loc='best',ncol=3)
+        
 #ax_q.legend(loc='best',ncol=3)
 ##        ax_volt.legend(loc='best',ncol=3)
 ##        ax_speed.legend(loc='best',ncol=3)
@@ -393,12 +488,468 @@ class publish:
         speed_coi = speeds/(4.0)
         return speed_coi 
 
+def loc2geojson():
+    ''' Converts pss/e bus location file .loc to geojson '''
+    print (hola)
+
+    
+    
+      
+    
+
+
+def heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False):
+    from mpl_toolkits.basemap import Basemap
+    import matplotlib.pyplot as plt
+    import json
+    import numpy as np
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    
+    # llcrnrlat,llcrnrlon,urcrnrlat,urcrnrlon
+    # are the lat/lon values of the lower left and upper right corners
+    # of the map.
+    # lat_ts is the latitude of true scale.
+    # resolution = 'c' means use crude resolution coastlines.
+    
+    geo = json.load(open(geojson_path, 'r'))
+    llcrnrlat=-5.964
+    urcrnrlat=15.904
+    llcrnrlon=-10.823
+    urcrnrlon=25.118
+    lat_ts=20
+                
+                
+    m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
+                
+    from matplotlib.patches import Polygon
+    
+    def draw_screen_poly( lats, lons, m, var):
+        x, y = m( lons, lats )
+        xy = zip(x,y)
+        var_max = 1.1
+        var_min = 0.9
+        var_scaled = (var-var_min)/(var_max-var_min)
+        
+        c = [var_scaled, 0.0, 1.0-var_scaled] #R,G,B
+        poly = Polygon( xy, facecolor='red', alpha=1.0 )
+        plt.gca().add_patch(poly)
+        var_array = np.array(x)*0.0+var
+        return x,y,var_array
+                
+           
+
+    
+    
+    h = hickle.load(tests_out)
+    
+    print(h.keys())
+    X = np.array([])
+    Y = np.array([])
+    Z = np.array([])
+    
+    
+    t=np.array(h[test_id]['sys']['time'])
+    t_index = np.where(t>time)[0][0]
+    
+    
+    for item in geo['features']:
+        if item [u'properties'].has_key(u'tag'):
+            if item [u'properties'][u'tag'] == u'substation':
+                coords_list = item[u'geometry'][u'coordinates'][0]
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                    
+                bus_num = item[u'properties'][u'name']
+                 
+    
+                sym_id = 'sym_{:s}'.format(bus_num)
+                
+                if sym_id in h[test_id]['sym']['sym_speed_list']:
+#                    if h[test_id].has_key(bus_id):
+                    u = h[test_id]['sym'][sym_id][variable][t_index]
+                    print(u)             
+                    x,y,var_array = draw_screen_poly( lats, lons, m, u )
+        #            print(x)
+                    X = np.hstack((X, x))
+                    Y = np.hstack((Y, y))
+                    Z = np.hstack((Z, var_array))
+           
+    xmargin=100000
+    ymargin=100000
+    
+    x_add = np.linspace(min(X)-xmargin,max(X)+xmargin,10)
+    y_add = np.linspace(min(Y)-ymargin,max(Y)+ymargin,10)
+    
+    y_add_1_max = y_add*0.0+max(Y)+ymargin
+    y_add_1_min = y_add*0.0+min(Y)-ymargin
+    
+    x_add_1_max = x_add*0.0+max(X)+xmargin
+    x_add_1_min = x_add*0.0+min(X)-xmargin
+    
+
+    X = np.hstack((X, x_add,             x_add, x_add_1_min, x_add_1_max))
+    Y = np.hstack((Y, y_add_1_min, y_add_1_max,       y_add,       y_add))
+    Z = np.hstack((Z, x_add*0+0.0, x_add*0+0.0, x_add*0+0.0, x_add*0+0.0))
+
+    grid_x, grid_y = np.mgrid[min(X):max(X):100j, min(Y):max(Y):100j]
+    
+    points = np.vstack((X,Y)).T
+    grid_z = griddata(points, Z, (grid_x, grid_y), method='linear')
+    
+    levels =np.linspace(-0.00015,0.00015,10)
+    
+    if mask_oceans == True:
+        from mpl_toolkits.basemap import maskoceans
+        lonpt, latpt = m(grid_x,grid_y,inverse=True)
+        grid_z = maskoceans(lonpt, latpt, grid_z)
+
+
+        
+    m.contourf(grid_x, grid_y, grid_z, levels, cmap=cm.seismic, zorder=2)    
+    
+#    ax = fig.add_subplot(111)
+#    m.scatter(X, Y, Z)
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111) 
+    
+#    ax.plot_trisurf(X,Y,U)
+#    plt.show()
+    
+    m.drawcoastlines()
+    m.drawstates()
+    
+    # draw parallels and meridians.
+    #m.drawparallels(np.arange(-90.,91.,30.))
+    #m.drawmeridians(np.arange(-180.,181.,60.))
+    m.drawmapboundary(fill_color='aqua', zorder=3) 
+    m.fillcontinents(zorder=1)
+    plt.savefig(png_path)  
+#    plt.savefig('pruebas_3d.svg')             
+
+    
+#    def interpol_1(X,Y,Z):
+#        grid_x, grid_y = np.mgrid[min(X):max(X):10j, min(Y):max(Y):10j]
+#        grid_z = grid_x*0.0
+#        
+#        for i in range(grid_x.shape[0]):
+#            for j in range(grid_x.shape[1]):
+#                x = grid_x[i,j]
+#                y = grid_y[i,j]
+#                suma = 0
+#                itf = 0
+#                for item_x,item_y,item_z in zip(X,Y,Z):
+#                    dist_x = abs(x - item_x) 
+#                    dist_y = abs(y - item_y) 
+#                    dist = (dist_x**2.0 + dist_y**2.0)**0.5
+#                    if dist < 10.0:
+#                        dist = 10.0
+#                    suma +=  item_z*1.0*np.exp(-(dist/100000.0)**2)
+#                    itf += 1.0
+#                    
+#                grid_z[i,j] = suma/itf
+#        return grid_x,grid_y,grid_z
+        
+                    
+    #import vector2mesh            
+    #grid_x,grid_y,grid_z = vector2mesh.interpol_1(X,Y,Z)
+    #plt.contourf(grid_x, grid_y, grid_z)
+                    
+
+
+    
+
+
+    
+              
+    #points = np.vstack((X,Y)).T
+    #
+    #positions = np.vstack([grid_x.ravel(), grid_y.ravel()])
+    #values = Z
+    #kernel = stats.gaussian_kde(values)
+    #ZZ = np.reshape(kernel(positions).T, grid_x.shape)
+    #
+    #import matplotlib.pyplot as plt
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111)
+    #ax.imshow(np.rot90(ZZ), cmap=plt.cm.gist_earth_r,
+    #          extent=[xmin, xmax, ymin, ymax])
+    ##ax.plot(m1, m2, 'k.', markersize=2)
+    #ax.set_xlim([xmin, xmax])
+    #ax.set_ylim([ymin, ymax])
+    #plt.show()
+    
+    
+    #tx = np.linspace(min(X), max(X), 100)
+    #ty = np.linspace(min(X), max(Y), 100)
+    #XI, YI = np.meshgrid(tx, ty)
+    #
+    ## use RBF
+    ##rbf = Rbf(X, Y, Z, epsilon=1.0)
+    ##ZI = rbf(XI, YI)
+    #
+    ## plot the result
+    ##n = plt.normalize(-2., 2.)
+    #plt.subplot(1, 1, 1)
+    
+    #plt.scatter(X, Y, 100, Z, cmap=cm.jet)
+    #plt.title('RBF interpolation - multiquadrics')
+    ##plt.xlim(0, 1)
+    ##plt.ylim(0, 1)
+    #plt.colorbar()
+    #
+    
+    
+    
+    
+    
+    plt.savefig('pruebas_3.png')
+    
+
+
+def heatmap2(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False):
+
+    from mpl_toolkits.basemap import Basemap
+    import matplotlib.pyplot as plt
+    import json
+    import numpy as np
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    
+    # llcrnrlat,llcrnrlon,urcrnrlat,urcrnrlon
+    # are the lat/lon values of the lower left and upper right corners
+    # of the map.
+    # lat_ts is the latitude of true scale.
+    # resolution = 'c' means use crude resolution coastlines.
+    
+    geo = json.load(open(geojson_path, 'r'))
+    llcrnrlat=-5.964
+    urcrnrlat=15.904
+    llcrnrlon=-10.823
+    urcrnrlon=25.118
+    lat_ts=20
+                
+                
+    m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
+                
+    from matplotlib.patches import Polygon
+
+    h = hickle.load(tests_out)
+    
+
+
+    grid_x, grid_y = np.mgrid[m.xmin:m.xmax:200j, m.ymin:m.ymax:200j]  
+    
+    t=np.array(h[test_id]['sys']['t'])
+    t_index = np.where(t>time)[0][0]
+    
+    def gauss2d(grid_x, grid_y, fwhm = 1.0, center=None):
+        """ Make a square gaussian kernel.
+        size is the length of a side of the square
+        fwhm is full-width-half-maximum, which
+        can be thought of as an effective radius.
+        """
+        x0, y0 = center
+    
+        
+        return np.exp(-4*np.log(2) * ((grid_x-x0)**2 + (grid_y-y0)**2) / fwhm**2) 
+
+
+
+
+
+
+    it = 0
+    for item in geo['features']:
+        if item [u'properties'].has_key(u'tag'):
+            if item [u'properties'][u'tag'] == u'substation':
+                coords_list = item[u'geometry'][u'coordinates'][0]
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                    
+                bus_num = item[u'properties'][u'name']
+                 
+    
+                bus_id = 'bus_{:s}'.format(bus_num)
+                if h[test_id].has_key(bus_id):
+                    u = h[test_id][bus_id][variable][t_index]
+#                    print(u)             
+                x,y = m(lons[0],lats[0])
+#        if u>10.0:
+#            u=10.0
+#        if u<-10.0:
+#            u=-10.0            
+#        print(u)       
+        if it == 0:
+            grid_z_0 = gauss2d(grid_x, grid_y, fwhm = (m.xmax-m.xmin)*0.1, center=(x,y))*(u-1.0)
+        if it > 0:
+            grid_z_0 += gauss2d(grid_x, grid_y, fwhm = (m.xmax-m.xmin)*0.1, center=(x,y))*(u-1.0)
+            
+                
+        it += 1
+           
+
+#    plt.imshow(np.arctan(10.0*grid_z_0))
+    plt.imshow(grid_z_0)
+    plt.show()
+    
+    return grid_z_0
+    
+    
+    
+def interpolate1d():
+    import matplotlib.pyplot as plt
+    from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
+    from scipy import interpolate
+    from mpl_toolkits.mplot3d import axes3d
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.tri as tri
+    
+    U = np.array([1.1, 1.05, 1.0, 0.9, 0.95, 0.97])
+    X = np.array([0.2,  0.4, 0.6, 1.2,  1.3,  1.7])
+    Y = np.array([0.3,  0.4, 0.8, 0.9,  1.0,  1.3])
+    
+    U=np.hstack((1.0,1.0,U,1.0,1.0))
+    X=np.hstack((0.0,0.0,X,2.0,2.0))
+    Y=np.hstack((0.0,1.5,Y,1.5,0.0))
+
+
+    #s = UnivariateSpline(X, U, s=1000)
+    #s = InterpolatedUnivariateSpline(X, U)
+    #s = interpolate.interp1d(X, U)
+    s = interpolate.BarycentricInterpolator(X, U)
+    s = interpolate.PchipInterpolator(X, U)
+    #s = interpolate.PiecewisePolynomial(X, U)
+    #s = interpolate.KroghInterpolator(X, U)
+    xs = np.linspace(min(X), max(X), 1000)
+    us = s(xs)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    ax.plot(X,U)
+    ax.plot(xs,us)
+    fig.savefig('pruebas_1d.png')
+
+
+    #s = UnivariateSpline(X, U, s=1000)
+    #s = InterpolatedUnivariateSpline(X, U)
+    #s = interpolate.interp1d(X, U)
+    s = interpolate.BarycentricInterpolator(X, U)
+    s = interpolate.PchipInterpolator(X, U)
+    #s = interpolate.PiecewisePolynomial(X, U)
+    #s = interpolate.KroghInterpolator(X, U)
+    
+    xs = np.linspace(min(X), max(X), 100)
+    
+    for i in range(100):
+        for k in range(X.shape[0]):
+            dist = (X[i] - xs[0])
+
+    us = s(xs)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    ax.plot(X,U)
+    ax.plot(xs,us)
+    fig.savefig('pruebas_1d_ext.png')
+        
+    
+def interpolate3d():    
+    points = np.vstack((X,Y)).T
+    values = U
+    
+    grid_x, grid_y = np.mgrid[min(X):max(X):100j, min(Y):max(Y):200j]
+    
+    
+    grid_z0 = griddata(points, values, (grid_x, grid_y), method='linear')
+    
+    # Create a custom triangulation
+    triang = tri.Triangulation(X, Y)
+    
+    
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(X, Y, U)
+    ax.contourf(grid_x, grid_y, grid_z0, cmap=cm.coolwarm)
+    ax.plot_trisurf(X,Y,U)
+    plt.show()
+    fig.savefig('pruebas_3d.png')    
+
+def test_118_plots():    
+
+    case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
+
+
+    
+    datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
+    gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+    
+    datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
+    gen_hydro_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+    
+    
+    datas = np.genfromtxt(os.path.join(case_dir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
+    gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
+    
+    vip_gen_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
+    #vip_gen_buses = [26,10,87,111,89,61,32]  
+    #vip_gen_buses = [26,10] 
+
+
+    casedir = r'/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
+    tests_out = r'/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/ieee118_v33_modif.hf5'    
+    
+    
+    pub = publish()    
+    pub.svg_dir = os.path.join(case_dir,'doc','svg')
+    pub.png_dir = os.path.join(case_dir,'doc','png')
+    pub.vip_gen_buses = vip_gen_buses
+    pub.hdf5file = tests_out
+    print(pub.hdf5file)
+    pub.plot_pq_w_a_large(u'v_ref_change_26_up')  
+    
+    
+def test_118_omega_animation():
+    geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/gis/location.json'
+    case_dir = r'/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
+    tests_out = os.path.join(case_dir,'ieee118_v33_modif.hf5')
+    png_path  = os.path.join(case_dir,'doc','png', 't_2.png')
+    variable = 'speed'
+    time = 0.1
+    test_id =  u'test_1'
+#    heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False)
+#    grid_z_0 = heatmap2(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False)    
+    for time in np.linspace(0.5,7.5,150):
+        png_path  = os.path.join(case_dir,'doc','png', 'animation_speed', 't_speed_{0:05d}.png'.format(int(1000*time)))
+        heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False)
+
+    #convert -delay 20 -loop 0 *.png myimage.gif
+
+
 
 if __name__ == '__main__':
     
     pub = publish()
+    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/pub.yaml')
+    
 
-    casedir = r'/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
-    tests_out = os.path.join(casedir,'tests_out.hdf5')    
-    pub.hdf5file = tests_out
-    pub.plot_pq_w_a_large('test_v_ref_change_111_up')
+#        
+        
+#    test_118_omega_animation()
+#    test_118_plots()
+    

@@ -1,6 +1,11 @@
 # Compiled python modules.
 *.pyc
 
+
+# Models los files.
+*.log
+
+
 # Setuptools distribution folder.
 /dist/
 

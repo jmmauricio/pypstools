@@ -1,7 +1,8 @@
-#(c) 2014 Mark W. Mueller
+#(c) 2015 Juan Manuel Mauricio
 __all__ = []
 
 import analysis
-import synthesis
+import publisher
+import tools
 
-__all__.extend(['analysis', 'synthesis'])
+__all__.extend(['analysis', 'publisher', 'tools'])

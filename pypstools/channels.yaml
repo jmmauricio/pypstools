@@ -1,0 +1,11 @@
+---
+# Variables to save in channels
+u: all
+phiu: all
+p_gen: all
+q_gen: all
+fehz: all
+ve: all
+speed: all
+p_load: all
+q_load: all

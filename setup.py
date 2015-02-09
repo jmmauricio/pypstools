@@ -5,13 +5,14 @@ def readme():
         return f.read()
 
 setup(name='pypstools',
-      version='0.0.0.a',
+      version='0.0.0a3',
       description='Python power system library',
-      url='http://github.com/markwmuller/pypstools',
+      url='http://github.com/jmmauricio/pypstools',
       author='Juan Manuel Mauricio',
       author_email='jmmauricio6@gmail.com',
       license='GPL V3',
-      packages=['controlpy'],
+      packages=[],
+      install_requires = [],
       zip_safe=False,
       classifiers=[
         'Development Status :: 3 - Alpha',
