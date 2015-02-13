@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 #import pypstools.publisher.rst_basic as rst
 import h5py
 
-def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSE33', channels_yaml = 'channels.yaml' ):
+def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity33', channels_yaml = 'channels.yaml' ):
     # =============================================================================================
     # Get installed location of latest PSS(R)E version
 

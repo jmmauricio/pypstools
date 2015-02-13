@@ -1,6 +1,9 @@
 """ Tools for plotting and publishing power system simulations and analysis results.
 
 (c) 2015 Juan Manuel Mauricio
+
+https://www.packtpub.com/books/content/plotting-geographical-data-using-basemap
+
 """
 from __future__ import division, print_function
 
@@ -34,56 +37,56 @@ def interactive_svg(plt,svg_file,ids, ax, distance_factor=0.8):
     script = '''<script type="text/ecmascript">
         <![CDATA[
     
-    	function init(evt)
-    	{
-    	    if ( window.svgDocument == null )
-    	    {
-    		svgDocument = evt.target.ownerDocument;
-    	    }
+        function init(evt)
+        {
+            if ( window.svgDocument == null )
+            {
+            svgDocument = evt.target.ownerDocument;
+            }
     
-    	    tooltip = svgDocument.getElementById('tooltip');
-    	    tooltip_bg = svgDocument.getElementById('tooltip_bg');
+            tooltip = svgDocument.getElementById('tooltip');
+            tooltip_bg = svgDocument.getElementById('tooltip_bg');
     
-    	}
+        }
     
-    	function ShowTooltip(evt, mouseovertext)
-    	{
+        function ShowTooltip(evt, mouseovertext)
+        {
          var distance_factor = %f;    
-    	    tooltip.setAttributeNS(null,"x",distance_factor*evt.clientX+11);
-    	    tooltip.setAttributeNS(null,"y",distance_factor*evt.clientY+27);
-    	    tooltip.firstChild.data = mouseovertext;
-    	    tooltip.setAttributeNS(null,"visibility","visible");
+            tooltip.setAttributeNS(null,"x",distance_factor*evt.clientX+11);
+            tooltip.setAttributeNS(null,"y",distance_factor*evt.clientY+27);
+            tooltip.firstChild.data = mouseovertext;
+            tooltip.setAttributeNS(null,"visibility","visible");
     
-    	    length = tooltip.getComputedTextLength();
-    	    tooltip_bg.setAttributeNS(null,"width",length+8);
-    	    tooltip_bg.setAttributeNS(null,"x",distance_factor*evt.clientX+8);
-    	    tooltip_bg.setAttributeNS(null,"y",distance_factor*evt.clientY+14);
-    	    tooltip_bg.setAttributeNS(null,"visibility","visibile");
-    	}
+            length = tooltip.getComputedTextLength();
+            tooltip_bg.setAttributeNS(null,"width",length+8);
+            tooltip_bg.setAttributeNS(null,"x",distance_factor*evt.clientX+8);
+            tooltip_bg.setAttributeNS(null,"y",distance_factor*evt.clientY+14);
+            tooltip_bg.setAttributeNS(null,"visibility","visibile");
+        }
     
-    	function HideTooltip(evt)
-    	{
-    	    tooltip.setAttributeNS(null,"visibility","hidden");
-    	    tooltip_bg.setAttributeNS(null,"visibility","hidden");
-    	}
+        function HideTooltip(evt)
+        {
+            tooltip.setAttributeNS(null,"visibility","hidden");
+            tooltip_bg.setAttributeNS(null,"visibility","hidden");
+        }
     
         ]]>
       </script>''' %(distance_factor)
     
     style = """<style>
         .caption{
-    	font-size: 14px;
-    	font-family: Arial;
+        font-size: 14px;
+        font-family: Arial;
         }
         .tooltip{
-    	font-size: 12px;
+        font-size: 12px;
      font-family: Arial;
         }
         .tooltip_bg{
-    	fill: white;
-    	stroke: black;
-    	stroke-width: 1;
-    	opacity: 0.85;
+        fill: white;
+        stroke: black;
+        stroke-width: 1;
+        opacity: 0.85;
         }
       </style>"""
       
@@ -137,6 +140,75 @@ class publish:
         
         
     def publisher(self, yaml_file):
+        '''Create figures with multiple axis and curves from .hdf5 tests result files
+        and considering yaml file configuration.
+        
+        Example of yaml file
+        --------------------
+        
+        .. code:: python
+        
+                # YAML
+                - name: figura 1              # figure
+                  file: ./speed_gen_zoom_1.svg
+                  axes:                       # axes
+                  - # axe 1
+                    curves:                   # curves group
+                    - 
+                      file: ./ieee118_pvsyn_1_100mva.hf5
+                      test_id: v_ref_change_26_up_pvsyn_1
+                      element_type: sym
+                      elements: [sym_26, sym_111]
+                      legends:  ['$\omega_{26}$', '$\omega_{111}$']
+                      variable: speed
+                    ylabel: Speed (pu)
+                    scale: 50.0
+                    offset: 50.0
+                    ylimits: [49.96,50.01]
+                  - # axe 2
+                    curves:
+                    - 
+                      file: ./ieee118_v33_modif.hf5
+                      test_id: v_ref_change_26_up
+                      element_type: sym
+                      elements: [sym_26, sym_111]
+                      legends:  ['$\omega_{26}$', '$\omega_{111}$']
+                      variable: speed
+                    ylabel: Speed (pu)
+                    xlabel: Time (s)
+                    scale: 50.0
+                    offset: 50.0
+                    ylimits: [49.96,50.01]
+                - name: figura 2              # figure
+                  file: ./pq_gen_zoom_1.svg
+                  axes:                       # axes
+                  - # axe 1
+                    curves:                   # curves group
+                    - 
+                      file:./ieee118_pvsyn_1_100mva.hf5
+                      test_id: v_ref_change_26_up_pvsyn_1
+                      element_type: sym
+                      elements: [sym_110]
+                      legends:  ['$p_{110}$']
+                      variable: p_gen
+                    ylabel: Power (MW)
+                    scale: 100.0
+                  - # axe 2
+                    curves:
+                    - 
+                      file: ./ieee118_v33_modif.hf5
+                      test_id: v_ref_change_26_up
+                      element_type: sym
+                      elements: [sym_110]
+                      legends:  ['$p_{110}$']
+                      variable: p_gen
+                    ylabel: Power (MW)
+                    xlabel: Time (s)
+                    scale: 100.0
+
+
+        '''        
+        
         
         ya = yaml.load(open(yaml_file,'r').read())
 
@@ -493,12 +565,8 @@ def loc2geojson():
     print (hola)
 
     
+def psys_map(yaml_file, mask_oceans = True):  
     
-      
-    
-
-
-def heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False):
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
     import json
@@ -506,131 +574,300 @@ def heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, tim
     from scipy.interpolate import griddata
     from matplotlib import cm
     
-    # llcrnrlat,llcrnrlon,urcrnrlat,urcrnrlon
-    # are the lat/lon values of the lower left and upper right corners
-    # of the map.
-    # lat_ts is the latitude of true scale.
-    # resolution = 'c' means use crude resolution coastlines.
+    ya = yaml.load(open(yaml_file,'r').read())
     
-    geo = json.load(open(geojson_path, 'r'))
-    llcrnrlat=-5.964
-    urcrnrlat=15.904
-    llcrnrlon=-10.823
-    urcrnrlon=25.118
+    
+    ## Map generation
+    geo = json.load(open(ya['psys_geo_file'], 'r'))
+    llcrnrlat=ya['bottom_lat']
+    urcrnrlat=ya['top_lat']
+    llcrnrlon=ya['left_lon']
+    urcrnrlon=ya['right_lon']
     lat_ts=20
                 
                 
     m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
                 llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
                 
+                
+                
+    ## System topology (from geojason)                
     from matplotlib.patches import Polygon
     
-    def draw_screen_poly( lats, lons, m, var):
-        x, y = m( lons, lats )
-        xy = zip(x,y)
-        var_max = 1.1
-        var_min = 0.9
-        var_scaled = (var-var_min)/(var_max-var_min)
-        
-        c = [var_scaled, 0.0, 1.0-var_scaled] #R,G,B
-        poly = Polygon( xy, facecolor='red', alpha=1.0 )
-        plt.gca().add_patch(poly)
-        var_array = np.array(x)*0.0+var
-        return x,y,var_array
-                
-           
-
+    m.drawcoastlines()
+    m.drawmapboundary(fill_color='aqua')
+    m.fillcontinents(color='#fdbb84',lake_color='aqua')
+    m.drawstates()
+    m.drawcountries()                  
     
-    
-    h = hickle.load(tests_out)
-    
-    print(h.keys())
-    X = np.array([])
-    Y = np.array([])
-    Z = np.array([])
-    
-    
-    t=np.array(h[test_id]['sys']['time'])
-    t_index = np.where(t>time)[0][0]
-    
-    
+              
     for item in geo['features']:
-        if item [u'properties'].has_key(u'tag'):
-            if item [u'properties'][u'tag'] == u'substation':
-                coords_list = item[u'geometry'][u'coordinates'][0]
+        # substations
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'substation':
+
+                    coords_list = item[u'geometry'][u'coordinates'][0]
+
+                    lons = []
+                    lats = []
+                    for coord in  coords_list: 
+                        
+                        lons += [coord[0]]
+                        lats += [coord[1]]
+                    
+                    x, y = m( lons, lats )
+                    xy = zip(x,y)
+                    poly = Polygon( xy, edgecolor='blue', facecolor='red', alpha=1.0, lw=5 )
+                    plt.gca().add_patch(poly) 
+
+        # lines
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'line':
+                coords_list = item[u'geometry'][u'coordinates']
                 lons = []
                 lats = []
                 for coord in  coords_list: 
                     
                     lons += [coord[0]]
                     lats += [coord[1]]
-                    
-                bus_num = item[u'properties'][u'name']
-                 
+                print(lons)
+                x, y = m( lons, lats )
+
+                m.plot(x,y, 'g')     
+      
+    output_dir = ya['output_dir']
+    plt.savefig(os.path.join(output_dir,'geo_psys_1.png'))
+    plt.savefig(os.path.join(output_dir,'geo_psys_1.svg'))
+    return m    
+
+
+def heatmap(yaml_file, mask_oceans = True):
+    '''Creates a heatmap considering geografical data, power system simulation results and grid topology
     
-                sym_id = 'sym_{:s}'.format(bus_num)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    '''
+    from mpl_toolkits.basemap import Basemap
+    import matplotlib.pyplot as plt
+    import json
+    import numpy as np
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    
+    ya = yaml.load(open(yaml_file,'r').read())
+    
+    
+    ## Map generation
+    geo = json.load(open(ya['psys_geo_file'], 'r'))
+    llcrnrlat=ya['bottom_lat']
+    urcrnrlat=ya['top_lat']
+    llcrnrlon=ya['left_lon']
+    urcrnrlon=ya['right_lon']
+    lat_ts=20
                 
-                if sym_id in h[test_id]['sym']['sym_speed_list']:
-#                    if h[test_id].has_key(bus_id):
-                    u = h[test_id]['sym'][sym_id][variable][t_index]
-                    print(u)             
-                    x,y,var_array = draw_screen_poly( lats, lons, m, u )
-        #            print(x)
-                    X = np.hstack((X, x))
-                    Y = np.hstack((Y, y))
-                    Z = np.hstack((Z, var_array))
-           
-    xmargin=100000
-    ymargin=100000
+                
+    m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
+                
+                
+                
+    ## System topology (from geojason)                
+    from matplotlib.patches import Polygon
     
-    x_add = np.linspace(min(X)-xmargin,max(X)+xmargin,10)
-    y_add = np.linspace(min(Y)-ymargin,max(Y)+ymargin,10)
-    
-    y_add_1_max = y_add*0.0+max(Y)+ymargin
-    y_add_1_min = y_add*0.0+min(Y)-ymargin
-    
-    x_add_1_max = x_add*0.0+max(X)+xmargin
-    x_add_1_min = x_add*0.0+min(X)-xmargin
-    
+                
+                
+    for item in geo['features']:
+        # substations
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'substation':
+                    coords_list = item[u'geometry'][u'coordinates'][0]
+                    lons = []
+                    lats = []
+                    for coord in  coords_list: 
+                        
+                        lons += [coord[0]]
+                        lats += [coord[1]]
+                    
+                    x, y = m( lons, lats )
+                    xy = zip(x,y)
+                    poly = Polygon( xy, facecolor='red', alpha=1.0 )
+                    plt.gca().add_patch(poly) 
+        # lines
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'line':
+                coords_list = item[u'geometry'][u'coordinates']
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                
+                x, y = m( lons, lats )
 
-    X = np.hstack((X, x_add,             x_add, x_add_1_min, x_add_1_max))
-    Y = np.hstack((Y, y_add_1_min, y_add_1_max,       y_add,       y_add))
-    Z = np.hstack((Z, x_add*0+0.0, x_add*0+0.0, x_add*0+0.0, x_add*0+0.0))
+                m.plot(x,y) 
 
-    grid_x, grid_y = np.mgrid[min(X):max(X):100j, min(Y):max(Y):100j]
+    test_id = ya['test_id']
     
-    points = np.vstack((X,Y)).T
-    grid_z = griddata(points, Z, (grid_x, grid_y), method='linear')
+    h = hickle.load(ya['tests_file'])
     
-    levels =np.linspace(-0.00015,0.00015,10)
+    t=np.array(h[test_id]['sys']['time'])
+    t_index = np.where(t>ya['time'])[0][0]
     
+    
+    
+    variable = ya['variable']  
+    element =  ya['element']
+    x_data = []
+    y_data = []
+    z_data = []
+    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
+    for item in geo['features']:
+        # substations
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'substation':
+                    coords_list = item[u'geometry'][u'coordinates'][0]
+                    x_d, y_d = m(coords_list[0][0],coords_list[0][1])
+                    x_data += [x_d] 
+                    y_data += [y_d]
+                    x_d, y_d = m(coords_list[2][0],coords_list[2][1])
+                    x_data += [x_d] 
+                    y_data += [y_d]
+                    
+                    
+                    buses = h[test_id]['sys']['buses']
+                    idx = buses.index('bus_' + item[u'properties'][u'id'])
+                    var = h[test_id][element]['bus_' + item[u'properties'][u'id']][variable][t_index]
+                    z_data += [var,var]
+                    
+    z_min = np.min(z_data) 
+    z_max = np.max(z_data) 
+    z_average = np.average(np.array(z_data))   
+    
+    x_data = np.array(x_data)
+    y_data = np.array(y_data)    
+    z_data = np.array(z_data)
+    
+    print(z_min)
+    print(z_max)
+
+
+    xmargin=0
+    ymargin=0
+    
+    x_min, y_min = m(ya['left_lon'],ya['bottom_lat'])
+    x_max, y_max = m(ya['right_lon'],ya['top_lat'])
+    
+    x_add = np.linspace(x_min-xmargin,x_max+xmargin,10)
+    y_add = np.linspace(y_min-ymargin,y_max+ymargin,10)
+  
+
+#    x_grid, y_grid = meshgrid(x_add, y_add)
+
+    boundary_x = np.hstack((             x_add, y_add*0+x_add[0],  y_add*0+x_add[-1],              x_add))
+    boundary_y = np.hstack((x_add*0+min(y_add),            y_add,              y_add,  x_add*0+y_add[-1]))
+    boundary_z = np.hstack((boundary_x*0.0+z_average))
+#    
+    x_add = np.hstack((x_data,boundary_x))
+    y_add = np.hstack((y_data,boundary_y))
+    z_add = np.hstack((z_data,boundary_z))
+
+    x_grid = np.linspace(x_min,x_max,500)
+    y_grid = np.linspace(y_min,y_max,500)
+    grid_x, grid_y = np.meshgrid(x_grid,y_grid)
+    print(grid_x.shape)
+    print(grid_y.shape)
+    points = np.vstack((x_add,y_add)).T
+    print(points.shape)
+    print(z_add.shape)
+    grid_z = griddata(points, z_add, (grid_x, grid_y), method='linear')
+#    
+    levels =np.linspace(z_min,z_max,10)
+#    
+    mask_oceans = True
+    
+    lons, lats = m(grid_x,grid_y,inverse=True)
+    
+    
+#    topo = interp(topoin,lons1,lats1,lons,lats,order=1)
+
     if mask_oceans == True:
+        print('masking oceans')
         from mpl_toolkits.basemap import maskoceans
         lonpt, latpt = m(grid_x,grid_y,inverse=True)
-        grid_z = maskoceans(lonpt, latpt, grid_z)
-
-
-        
-    m.contourf(grid_x, grid_y, grid_z, levels, cmap=cm.seismic, zorder=2)    
-    
-#    ax = fig.add_subplot(111)
-#    m.scatter(X, Y, Z)
-#    fig = plt.figure()
-#    ax = fig.add_subplot(111) 
-    
-#    ax.plot_trisurf(X,Y,U)
-#    plt.show()
-    
+        grid_z = maskoceans(lonpt, latpt, grid_z, resolution='f', grid=1.25)
+#
+#
+#        
+    m.contourf(grid_x, grid_y, grid_z, cmap=cm.coolwarm, zorder=0, extend='both')   
+     
+    m.scatter(x_data, y_data, z_data)   
+#    
     m.drawcoastlines()
+    m.drawmapboundary(fill_color='aqua')
     m.drawstates()
+    m.drawcountries()   
     
-    # draw parallels and meridians.
-    #m.drawparallels(np.arange(-90.,91.,30.))
-    #m.drawmeridians(np.arange(-180.,181.,60.))
-    m.drawmapboundary(fill_color='aqua', zorder=3) 
-    m.fillcontinents(zorder=1)
-    plt.savefig(png_path)  
-#    plt.savefig('pruebas_3d.svg')             
+    output_dir = ya['output_dir']
+    plt.savefig(os.path.join(output_dir,'geo_psys_1.png'))
+    plt.savefig(os.path.join(output_dir,'geo_psys_1.svg'))
+    return m
+    
+    
+#    for item in geo['features']:
+#    if item [u'properties'].has_key(u'tag'):
+#        if item [u'properties'][u'tag'] == u'substation':
+#            coords_list = item[u'geometry'][u'coordinates'][0]
+#            lons = []
+#            lats = []
+#            for coord in  coords_list: 
+#                
+#                lons += [coord[0]]
+#                lats += [coord[1]]
+#                
+#            bus_num = item[u'properties'][u'name']
+#             
+#
+#            sym_id = 'sym_{:s}'.format(bus_num)
+#            
+#            if sym_id in h[test_id]['sym']['sym_speed_list']:
+#    #                    if h[test_id].has_key(bus_id):
+#                u = h[test_id]['sym'][sym_id][variable][t_index]
+#                print(u)             
+#                x,y,var_array = draw_screen_poly( lats, lons, m, u )
+#    #            print(x)
+#                X = np.hstack((X, x))
+#                Y = np.hstack((Y, y))
+#                Z = np.hstack((Z, var_array)) 
+#                
+                    
+                    
+  
+##    ax = fig.add_subplot(111)
+##    m.scatter(X, Y, Z)
+##    fig = plt.figure()
+##    ax = fig.add_subplot(111) 
+#    
+##    ax.plot_trisurf(X,Y,U)
+##    plt.show()
+#    
+#    m.drawcoastlines()
+#    m.drawstates()
+#    
+#    # draw parallels and meridians.
+#    #m.drawparallels(np.arange(-90.,91.,30.))
+#    #m.drawmeridians(np.arange(-180.,181.,60.))
+#    m.drawmapboundary(fill_color='aqua', zorder=3) 
+#    m.fillcontinents(zorder=1)
+#    plt.savefig(png_path)  
+##    plt.savefig('pruebas_3d.svg')             
 
     
 #    def interpol_1(X,Y,Z):
@@ -708,11 +945,11 @@ def heatmap1(test_id, case_dir, geojson_path, png_path, tests_out, variable, tim
     
     
     
-    plt.savefig('pruebas_3.png')
+    
     
 
 
-def heatmap2(test_id, case_dir, geojson_path, png_path, tests_out, variable, time, mask_oceans = False):
+def heatmap2(yaml_file, mask_oceans = False):
 
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
@@ -944,10 +1181,14 @@ def test_118_omega_animation():
 
 if __name__ == '__main__':
     
-    pub = publish()
-    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/pub.yaml')
-    
+#    pub = publish()
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/pub.yaml')
 
+#    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/geopsys.yaml'    
+#    m = heatmap(yaml_file, mask_oceans = False)
+
+    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/geopsys.yaml'    
+    m = psys_map(yaml_file, mask_oceans = False)
 #        
         
 #    test_118_omega_animation()
