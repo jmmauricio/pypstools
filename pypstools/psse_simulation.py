@@ -10,6 +10,9 @@ import scipy.linalg
 import analysis
 import hickle
 
+import xml.etree.ElementTree as ET
+from StringIO import StringIO
+import json
 
 # -*- coding: cp1252 -*-
 #[dyntools_demo.py]  09/22/100    Demo for using functions from dyntools module
@@ -19,7 +22,7 @@ import hickle
 
 
 '''
-import yaml 
+import yaml as ya
 import os, sys
 import pickle
 import numpy as np
@@ -29,8 +32,13 @@ import matplotlib.pyplot as plt
 #import pypstools.publisher.rst_basic as rst
 import h5py
 
-def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity33', channels_yaml = 'channels.yaml' ):
-    # =============================================================================================
+def psse(test_info, psse_version = 'PSSE33'):
+    
+    
+    out_dir = test_info['out_dir']    
+    raw_dyr_dir = test_info['raw_dyr_dir'] 
+    out_dir = test_info['out_dir']     
+    case_name = test_info['case_name']  
     # Get installed location of latest PSS(R)E version
 
     if psse_version == 'PSSE33':
@@ -38,41 +46,40 @@ def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity
     if psse_version == 'PSSEUniversity33':        
         pssedir = r'C:\Program Files\PTI\PSSEUniversity33'
     
-    # =============================================================================================
     # Files Used
-    
-    print(os.getcwd())
+
     sys.path.append(os.path.join(os.getcwd(),'..','..'))  
     pssbindir  = os.path.join(pssedir,'PSSBIN')
-
-    #casedir=r'E:\jmmauricio\Documents\public\jmmauricio6\RESEARCH\psse_models\test\pvsyn1\data\inf_pvsync'
+    
     sys.path.append(os.path.join(os.getcwd(),'..'))
-    libraryname = os.path.join(casedir,'dsusr.dll')
-    print(libraryname)
+    
+    if test_info.has_key('modellibrary'):
+        libraryname = test_info['modellibrary']
+    else:
+        libraryname = os.path.join(raw_dyr_dir,'dsusr.dll')
+    
     rawfile    = os.path.join(raw_dyr_dir,case_name + '.raw')
     dyrfile    = os.path.join(raw_dyr_dir,case_name + '.dyr')
     dyafile_avr= os.path.join(raw_dyr_dir,case_name + '_avr.dya')
     dyafile_gov= os.path.join(raw_dyr_dir,case_name + '_gov.dya')
     dyafile_pss= os.path.join(raw_dyr_dir,case_name + '_pss.dya')
-    xsfile = os.path.join(casedir,case_name + '_xs.txt')
-    savfile    = os.path.join(casedir,case_name + '.sav')
-    savdynfile = os.path.join(casedir,case_name + '_dyn.sav')
-    snpfile    = os.path.join(casedir,case_name + '.snp')
-    outfile1   = os.path.join(casedir,case_name + '.out')
-    outfile2   = os.path.join(casedir,case_name + '.out')
-    outfile3   = os.path.join(casedir,case_name + '.out')
-    prgfile    = os.path.join(casedir,'dyntools_demo_progress.txt')
-    chnffile = os.path.join(casedir,case_name + '.pkl') 
-    lsa_file  = os.path.join(casedir,case_name + '.lsa')
-    lsa_dat  = os.path.join(casedir,case_name + '.dat')
-    ltifile = os.path.join(casedir,'sys_abcd_f12.pkl')
+    xsfile = os.path.join(out_dir,case_name + '_xs.txt')
+    savfile    = os.path.join(out_dir,case_name + '.sav')
+    savdynfile = os.path.join(out_dir,case_name + '_dyn.sav')
+    snpfile    = os.path.join(out_dir,case_name + '.snp')
+    outfile1   = os.path.join(out_dir,case_name + '.out')
+    outfile2   = os.path.join(out_dir,case_name + '.out')
+    outfile3   = os.path.join(out_dir,case_name + '.out')
+    prgfile    = os.path.join(out_dir,'dyntools_demo_progress.txt')
+    chnffile = os.path.join(out_dir,case_name + '.pkl') 
+    lsa_file  = os.path.join(out_dir,case_name + '.lsa')
+    lsa_dat  = os.path.join(out_dir,case_name + '.dat')
+    ltifile = os.path.join(out_dir,'sys_abcd_f12.pkl')
     config_file = 'configuration.pkl'
-    tests_config_file = os.path.join(casedir,'tests.pkl')
-    tests_out = os.path.join(casedir,'tests_out.hdf5')
-    # =============================================================================================
-    
-    
-    # =============================================================================================
+    tests_config_file = os.path.join(out_dir,'tests.pkl')
+    tests_out = os.path.join(out_dir,'tests_out.hdf5')
+
+
     # Check if running from Python Interpreter
     exename = sys.executable
     p, nx   = os.path.split(exename)
@@ -83,14 +90,16 @@ def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity
     
     
     import dyntools
-    
-    import redirect
-    redirect.psse2py()    
     import psspy
+    import redirect
+    
+    ierr = psspy.close_powerflow()
+    
+    redirect.psse2py()    
+    
     _i = psspy._i
     _f = psspy._f
-    
-    import psspy
+
     ierr = psspy.psseinit(buses=80000)  # choose here bus numbers you want
     
     psspy.lines_per_page_one_device(1,90)
@@ -117,20 +126,21 @@ def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity
     # se guarda la solucion .sav para simulacion dinamica
     psspy.save(savdynfile)
     ierr = psspy.addmodellibrary(libraryname)
-    
-    
+    if ierr == 0: 
+        print('Library {:s} added'.format(libraryname))
+    if ierr == 1: 
+        print('Library not found!')    
     # se cargan los datos dinamicos
     psspy.dyre_new([1,1,1,1],dyrfile,"","","")
       
-    
-    channels_str = open(channels_yaml,'r').read()
-    channels = yaml.load(channels_str)
+
+    channels = test_info['channels'] 
 
     sid = 0    
     all_buses = 0
         
     for item in channels:
-        print(item)
+        
 
         # VOLT
         if item == 'u':
@@ -194,62 +204,14 @@ def psse(case_name,raw_dyr_dir,casedir,vip_buses, psse_version = 'PSSEUniversity
             sid += 1    
             psspy.bsys(sid,0,[ 0.4, 600.],0,[],len(iarray[0]),iarray[0],0,[],0,[])           
             psspy.chsb(sid,all_buses,[-1,-1,-1,1,26,0])  #STATUS(5) = 26 PLOAD.              
-            
-            
-            
-    #    STATUS(5) = 1 ANGLE, machine relative rotor angle (degrees).
-    
-    
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 4 ETERM, machine terminal voltage (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 5 EFD, generator main field voltage (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 6 PMECH, turbine mechanical power (pu on MBASE).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 7 SPEED, machine speed deviation from nominal (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 8 XADIFD, machine field current (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 9 ECOMP, voltage regulator compensated voltage (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 10 VOTHSG, stabilizer output signal (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 11 VREF, voltage regulator voltage setpoint (pu).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 12 BSFREQ, bus pu frequency deviations.
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 13 VOLT, bus pu voltages (complex).
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 14 voltage and angle
-    #psspy.chsb(0,all_buses,[-1,-1,-1,1,1,0])  # STATUS(5) = 15 flow (P).
-    #STATUS(5) = 16 flow (P and Q).
-    #STATUS(5) = 17 flow (MVA).
-    #STATUS(5) = 18 apparent impedance (R and X).
-    #STATUS(5) = 21 ITERM.
-    #STATUS(5) = 22 machine apparent impedance
-    #STATUS(5) = 23 VUEL, minimum excitation limiter output signal (pu).
-    #STATUS(5) = 24 VOEL, maximum excitation limiter output signal (pu).
-    #STATUS(5) = 25 PLOAD.
-    #STATUS(5) = 26 QLOAD.
-    #STATUS(5) = 27 GREF, turbine governor reference.
-    #STATUS(5) = 28 LCREF, turbine load control reference.
-    #STATUS(5) = 29 WVLCTY, wind velocity (m/s).
-    #STATUS(5) = 30 WTRBSP, wind turbine rotor speed deviation (pu).
-    #STATUS(5) = 31 WPITCH, pitch angle (degrees).
-    #STATUS(5) = 32 WAEROT, aerodynamic torque (pu on MBASE).
-    #STATUS(5) = 33 WROTRV, rotor voltage (pu on MBASE).
-    #STATUS(5) = 34 WROTRI, rotor current (pu on MBASE).
-    #STATUS(5) = 35 WPCMND, active power command from wind control
-    #(pu on MBASE).
-    #STATUS(5) = 36 WQCMND, reactive power command from wind control
-    #(pu on MBASE).
-    #STATUS(5) = 37 WAUXSG, output of wind auxiliary control (pu on
-    #MBASE).
-
-
-    #ierr, L_vsc_1 = psspy.mdlind(7, '1', 'GEN', 'VAR')
-    #ierr, L_vsc_2 = psspy.mdlind(8, '1', 'GEN', 'VAR')
-    #        
-    #psspy.var_channel([-1,L_vsc_1],)
-    #psspy.var_channel([-1,L_vsc_1+1],)
-    #psspy.var_channel([-1,L_vsc_2],)
-    #psspy.var_channel([-1,L_vsc_2+1],)
+                        
     # se guarda todo en .snp
     psspy.snap([-1,-1,-1,-1,-1],snpfile)
     
     # se inicializa el sistema
     psspy.strt(0,outfile1)
     
+  
     return psspy,dyntools,savdynfile,snpfile
 
 
@@ -286,26 +248,63 @@ def name2chan(chnf, varname, busnumber, bus_to=0):
 
 
 
-
-class test:
+class tests:
     '''Class to simulate tests with PSS/E
 
 
     '''
     
-    def __init__(self, psspy,dyntools,savdynfile,snpfile):
-        self.psspy = psspy
-        self.dyntools =dyntools
-        self.savdynfile = savdynfile
-        self.snpfile = snpfile
+    def __init__(self):
+#        self.psspy = psspy
+#        self.dyntools =dyntools
+#        self.savdynfile = savdynfile
+#        self.snpfile = snpfile
         self.channels_yaml = 'channels.yaml'
         self.t_pert = 1.0 # default time for perturbation
-        self.t_end = 20.0 # default time to end the simulation
+        self.t_end = 15.0 # default time to end the simulation
         self.dt = 0.001   # default integration time step
         self.decimation_file = 25
         self.decimation_progress = 1000
+        self.tests_results = {}
+        
+    def set_up(self, yaml_file):
 
-    def run(self, outfile):
+        import yaml as ya
+        self.tests_yaml = yaml_file
+        self.tests_info = ya.load(open(yaml_file,'r'))
+        if self.tests_info.has_key('t_end'):
+            self.t_end = self.tests_info['t_end']
+            
+        
+        
+    def set_up_psse(self,item_test):
+        
+        psspy,dyntools,savdynfile,snpfile = psse(item_test, psse_version = 'PSSE33')
+        
+        self.psspy = psspy
+        self.dyntools = dyntools
+        self.savdynfile = savdynfile
+        self.snpfile = snpfile
+
+    def run_tests(self):    
+        
+        
+        for item_test in self.tests_info['tests']:   
+            self.data = item_test 
+            self.set_up_psse(item_test)
+            self.outfile = os.path.join(item_test['out_dir'],item_test['case_name'] + '.out')
+            self.run_test(self.outfile )
+            self.outfile2dict()
+            self.tests_results.update({item_test['test_id']:self.results_dict})
+            
+        tests_out = os.path.join(self.tests_info['hdf5file'])
+        
+        hickle.dump(self.tests_results, tests_out)
+        
+        return self.tests_results        
+        
+        
+    def run_test(self, outfile):
         self.outfile = outfile
         psspy = self.psspy
 
@@ -324,18 +323,103 @@ class test:
 	# runs without perturbation until t=1s
         psspy.run(0, self.t_pert,self.decimation_progress,self.decimation_file,self.decimation_file)
 
+	# for no perturbation
+        if self.data['test_type']=='none':
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+            
 	# for v_ref changes
         if self.data['test_type']=='v_ref_change':
             ibus = self.data['gen_bus']
             id   = self.data['gen_id']
             newval = self.data['change']
 
-            ierr = psspy.increment_vref(ibus, id, newval)
+            ierr = psspy.increment_vref(ibus, str(id), newval)
 
             t_end = self.t_end
             psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
 
-        
+	# for gen trip
+        if self.data['test_type']=='gen_trip':
+            ibus = self.data['gen_bus']
+            id   = self.data['gen_id']
+
+            ierr = psspy.dist_machine_trip(ibus,str(id))
+
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+            
+	# for load trip: load trip
+        if self.data['test_type']=='load_trip':
+            frmbus = self.data['load_bus']
+            id   = self.data['load_id']
+            ierr = psspy.purgload(frmbus, str(id))
+            
+                
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+    
+    
+    
+    
+	# for load change: change in loads active and reactive powers
+        if self.data['test_type']=='load_change':
+            ibus = self.data['load_bus']
+            id   = self.data['load_id']
+            p_load_new   = self.data['p_load_new']
+            q_load_new   = self.data['q_load_new']
+            sid = 9
+            psspy.bsys(sid,0,[0.0,0.0],0,[],ibus,[ibus],0,[],0,[])
+            flag = 5
+            string = 'O_TOTALACT'
+            ierr, rarray = psspy.alodbusreal(sid, flag, string)
+            
+            print('TOTALACT:')
+            print(ierr)
+            print(rarray)
+            
+            psspy.scal_2(sid,0,1,[0,0,0,0,0],[0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+            psspy.scal_2(0,1,2,[_i,1,0,1,0],[ p_load_new,0.0,0.0,-.0,0.0,-.0, q_load_new])
+            
+                
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+            
+	# for line trip
+        if self.data['test_type']=='line_trip':
+            ibus = self.data['i_bus']
+            jbus = self.data['j_bus']
+            id   = self.data['ckt_id']
+            ierr = psspy.dist_branch_trip(ibus, jbus, str(id))                
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+
+
+	# for bus_fault_line trip
+        if self.data['test_type']=='bus_fault_line_trip':
+            print(self.data['test_id'] )
+            fault_duration = self.data['fault_duration'] 
+            fault_bus = self.data['fault_bus']
+            ibus = self.data['i_bus']
+            jbus = self.data['j_bus']
+            id   = self.data['ckt_id']
+#            t_fault = t_end  
+            units = 1
+            basekv = 400.0
+            values = [0.0,-0.2E+16] 
+            ierr = psspy.dist_bus_fault(ibus, units, basekv, values)
+            
+            t_end = self.t_pert +  fault_duration
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+            
+            ierr = psspy.dist_clear_fault(1)
+            ierr = psspy.dist_branch_trip(ibus, jbus, str(id))  
+            
+            t_end = self.t_end
+            psspy.run(0, t_end,self.decimation_progress,self.decimation_file,self.decimation_file)
+            
+            
+            
         if self.data['test_type']=='freq_change':
             t_ends = np.arange(1.0,2.0,0.01)
             for t_end in t_ends:
@@ -453,8 +537,8 @@ class test:
 
         psspy = self.psspy
         
-        channels_str = open(self.channels_yaml,'r').read()
-        channels = yaml.load(channels_str)
+#        channels_str = open(self.channels_yaml,'r').read()
+        channels = self.data['channels']
 
         chnf = self.dyntools.CHNF(self.outfile)
 
@@ -462,10 +546,14 @@ class test:
         self.t = t
 
         results_dict = {'sys':{'time':np.array(np.array(chnf.get_data()[2]['time']))},
+                        'syms':[],
+                        'loads':[],
                         'bus':{},
-                        'sym':{}}
+                        'sym':{},
+                        'load':{}}
 
         syms = {}
+        loads = {}
         for item in channels:
    
             # VOLT
@@ -478,22 +566,24 @@ class test:
                 for item in iarray[0]:
                     bus_id = 'bus_{:d}'.format(item)
                     u = np.array(chnf.get_data()[2][name2chan(chnf,'VOLT', item)])
-                    buses.update({bus_id:{'u':u}})
+                    buses.update({bus_id:{'u':{'data':u,'units':'pu'}}})
                     bus_u_list += [bus_id]                  
                 buses.update({'bus_u_list':bus_u_list})
                 
                    
-            # ANG
-            if item == 'phiu':
-                if channels[item] == 'all':                
-                    sid,flag, string = -1,4,'NUMBER'
-                    ierr, iarray = psspy.amachint(-1, flag, string)   
-                for item in iarray[0]:
-                    sym_id = 'sym_{:d}'.format(item)
-                    phiu = np.array(chnf.get_data()[2][name2chan(chnf,'ANGL', item)])
-                    if not syms.has_key(sym_id):
-                        syms.update({sym_id:{}})
-                    syms[sym_id].update({'phiu':phiu})
+#            # ANG
+#            if item == 'phiu':
+#                bus_u_list = []
+#                if channels[item] == 'all':                
+#                    flag, string = 2,'NUMBER'
+#                    ierr, iarray = psspy.abusint(-1, flag, string)
+#                buses = {}
+#                for item in iarray[0]:
+#                    bus_id = 'bus_{:d}'.format(item)
+#                    phiu = np.array(chnf.get_data()[2][name2chan(chnf,'ANGLE', item)])
+#                    buses.update({bus_id:{'phiu':{'data':phiu,'units':'pu'}}})
+#                    bus_u_list += [bus_id]                  
+#                buses.update({'bus_u_list':bus_u_list})
                     
             # SPD
             if item == 'speed':
@@ -507,8 +597,9 @@ class test:
                     speed = np.array(chnf.get_data()[2][name2chan(chnf,'SPD', item)])
                     if not syms.has_key(sym_id):
                         syms.update({sym_id:{}})
-                    syms[sym_id].update({'speed':speed})
-                    syms.update({'sym_speed_list':sym_speed_list})
+                    syms[sym_id].update({'speed':{'data':speed,'units':'pu'}})
+#                    syms.update({'sym_speed_list':sym_speed_list})
+
 
             # PGEN
             if item == 'p_gen':
@@ -520,7 +611,7 @@ class test:
                     p_gen = np.array(chnf.get_data()[2][name2chan(chnf,'POWR', item)])
                     if not syms.has_key(sym_id):
                         syms.update({sym_id:{}})
-                    syms[sym_id].update({'p_gen':p_gen})
+                    syms[sym_id].update({'p_gen':{'data':p_gen,'units':'pu-s'}})
                     
             # QGEN
             if item == 'q_gen':
@@ -532,7 +623,7 @@ class test:
                     q_gen = np.array(chnf.get_data()[2][name2chan(chnf,'VARS', item)])
                     if not syms.has_key(sym_id):
                         syms.update({sym_id:{}})
-                    syms[sym_id].update({'q_gen':q_gen})
+                    syms[sym_id].update({'q_gen':{'data':q_gen,'units':'pu-s'}})
 
             # Pt   NOT IMPLEMENTED IN CHSB
             if item == 'p_t':
@@ -546,234 +637,294 @@ class test:
                         syms.update({sym_id:{}})
                     syms[sym_id].update({'p_t':p_t})
                     
-
+            # PLOD
+            if item == 'p_load':
+                if channels[item] == 'all':                
+                    sid,flag, string = -1,4,'NUMBER'
+                    ierr, iarray = psspy.aloadint(sid, flag, string) 
+                for item in iarray[0]:
+                    load_id = 'load_{:d}'.format(item)
+                    p_load = np.array(chnf.get_data()[2][name2chan(chnf,'PLOD', item)])
+                    if not loads.has_key(load_id):
+                        loads.update({load_id:{}})
+                    loads[load_id].update({'p_load':{'data':p_load,'units':'pu-s'}})
 
         results_dict['bus'].update(buses)             
-        results_dict['sym'].update(syms)             
-#    
-#            # PGEN
-#            if item == 'p_gen':
-#                if channels[item] == 'all':                
-#                    sid,flag, string = -1,4,'NUMBER'
-#                    ierr, iarray = psspy.amachint(-1, flag, string)                
-#                sid += 1    
-#                psspy.bsys(sid,0,[ 0.4, 600.],0,[],len(iarray[0]),iarray[0],0,[],0,[])           
-#                psspy.chsb(sid,all_buses,[-1,-1,-1,1,16,0])  # STATUS(5) = 16 flow (P and Q).
-#    
-#            # PLOAD
-#            if item == 'p_load':
-#                if channels[item] == 'all':                
-#                    flag, string = 4,'NUMBER'
-#                    ierr, iarray = psspy.alodbusint(-1, flag, string)              
-#                sid += 1    
-#                psspy.bsys(sid,0,[ 0.4, 600.],0,[],len(iarray[0]),iarray[0],0,[],0,[])           
-#                psspy.chsb(sid,all_buses,[-1,-1,-1,1,25,0])  #STATUS(5) = 25 PLOAD.         
-#    
-#            # QLOAD
-#            if item == 'p_load':
-#                if channels[item] == 'all':                
-#                    sid,flag, string = -1,4,'NUMBER'
-#                    ierr, iarray = psspy.alodbusint(-1, flag, string)                 
-#                sid += 1    
-#                psspy.bsys(sid,0,[ 0.4, 600.],0,[],len(iarray[0]),iarray[0],0,[],0,[])           
-#                psspy.chsb(sid,all_buses,[-1,-1,-1,1,26,0])  #STATUS(5) = 26 PLOAD.  
-#    
-#    
-#    
-#
-#
-#
-#
-#
-#
-#
-#        
-#        py2mat_dict = {}
-#        
-#        test_id = self.data['test_id']
-#
-#        data_dict = {}
-# 
-#        var_list = self.var_list 
-#
-#        results_dict.update({'sys':{'t':chnf.get_data()[2]['time']}})   
-#        
-##        for item_var,item_psse_var,item_buses in  var_list:
-##            
-##            if item_psse_var == 'VAR':      
-##                device_name = item_var[0]
-##                if not data_dict.has_key(device_name):
-##                    data_dict.update({device_name:{}})                
-##                item_value = np.array(chnf.get_data()[2][name2chan(chnf,item_psse_var, item_buses)])
-##                data_dict[device_name].update({item_var[1]:item_value})
-##                
-##            if not (item_psse_var == 'SPD' or item_psse_var == 'VAR'):    
-##                for item_bus in item_buses:
-##                    bus_name = 'bus_{:d}'.format(item_bus) 
-##                    if not data_dict.has_key(bus_name):
-##                        data_dict.update({bus_name:{}})  
-##                    print(item_psse_var)
-##                    print(name2chan(chnf,item_psse_var, item_bus))
-##                    item_value = np.array(chnf.get_data()[2][name2chan(chnf,item_psse_var, item_bus)])
-##                    data_dict[bus_name].update({item_var:item_value})
-##                    
-##                    ierr, cmpval = self.psspy.gendat(item_bus) 
-##                    if ierr == 3:
-##                        item_value = np.array(chnf.get_data()[2][name2chan(chnf,item_psse_var, item_bus)])
-##                        data_dict[device_name].update({item_var:item_value})
-##                        
-##                    bus_name = 'bus_{:d}'.format(item_bus)
-##                    if not data_dict.has_key(device_name):
-##                        data_dict.update({device_name:{}})
-##                    ierr, cmpval = self.psspy.gendat(item_bus)
-##                    print (ierr)
-##                    print (cmpval)
-##                    if not(ierr==3 and item_psse_var=='SPD'):
-                        
+        results_dict['sym'].update(syms)  
+        results_dict['load'].update(loads)  
+        results_dict['syms'] =  sym_speed_list                            
                 
         self.results_dict = results_dict
         
+
+def outfile2dict(out_file):        
+    '''Converts PSS/E .out file to python dictionary
+ 
+    example:
+    
+        {'sys':{
+                'time':np.array([...])},
+         'bus':{
+                'bus_1':{
+                         'u':np.array([...]),
+                         'phiu':np.array([...]),
+                         'fehz':np.array([...])},
+                'bus_2':{
+                         'u':np.array([...]),
+                         'phiu':np.array([...]),
+                         'fehz':np.array([...])}},         
+         'sym':{
+                'gen_1':{'bus_id':'bus_1'
+                         'p':np.array([...]),
+                         'q':np.array([...]),
+                         'speed':np.array([...]),
+                         've':np.array([...]),
+                         'phi':np.array([...])}},
+         'load':{
+                 'load_1':{'bus_id':'bus_2'
+                           'p':np.array([...]),
+                           'q':np.array([...])}}
+        }
         
+        
+        bus_1':{'speed':np.array([...]),{'volt':np.array([...])}},
+         'bus_2':{{'volt':np.array([...])}}}              
+    '''
+    
+#        vip_buses = self.vip_buses
+#        
+#        self.var_list =      [('volt','VOLT',vip_buses), ('speed','SPD',vip_buses), ('p_gen','POWR',vip_buses),
+#         ('q_gen','VARS',vip_buses), ('freq','FREQ',vip_buses)]
+
+
+    pssedir = r'C:\Program Files\PTI\PSSE33'    
+    pssbindir  = os.path.join(pssedir,'PSSBIN')
+    
+    # Check if running from Python Interpreter
+    exename = sys.executable
+    p, nx   = os.path.split(exename)
+    nx      = nx.lower()
+    if nx in ['python.exe', 'pythonw.exe']:
+        os.environ['PATH'] = pssbindir + ';' + os.environ['PATH']
+        sys.path.insert(0,pssbindir)
+        
+    import dyntools
+    chnf = dyntools.CHNF(out_file)
+
+    t = np.array(chnf.get_data()[2]['time'])
+
+    results_dict = {'sys':{'time':np.array(np.array(chnf.get_data()[2]['time']))},
+                    'syms':[],
+                    'loads':[],
+                    'bus':{},
+                    'sym':{},
+                    'load':{},
+                    'line':{},}
+    channels = {}
+    syms = {}
+    loads = {}
+    
+    for item in channels:
+   
+        # VOLT
+        if item == 'u':
+            bus_u_list = []
+#            if channels[item] == 'all':                
+#                flag, string = 2,'NUMBER'
+#                ierr, iarray = psspy.abusint(-1, flag, string)
+            buses = {}
+            for item in iarray[0]:
+                bus_id = 'bus_{:d}'.format(item)
+                u = np.array(chnf.get_data()[2][name2chan(chnf,'VOLT', item)])
+                buses.update({bus_id:{'u':{'data':u,'units':'pu'}}})
+                bus_u_list += [bus_id]                  
+            buses.update({'bus_u_list':bus_u_list})
+            
                
+#            # ANG
+#            if item == 'phiu':
+#                bus_u_list = []
+#                if channels[item] == 'all':                
+#                    flag, string = 2,'NUMBER'
+#                    ierr, iarray = psspy.abusint(-1, flag, string)
+#                buses = {}
+#                for item in iarray[0]:
+#                    bus_id = 'bus_{:d}'.format(item)
+#                    phiu = np.array(chnf.get_data()[2][name2chan(chnf,'ANGLE', item)])
+#                    buses.update({bus_id:{'phiu':{'data':phiu,'units':'pu'}}})
+#                    bus_u_list += [bus_id]                  
+#                buses.update({'bus_u_list':bus_u_list})
+                
+        # SPD
+        if item == 'speed':
+            sym_speed_list = []
+            if channels[item] == 'all':                
+                sid,flag, string = -1,4,'NUMBER'
+                ierr, iarray = psspy.amachint(-1, flag, string)   
+            for item in iarray[0]:
+                sym_id = 'sym_{:d}'.format(item)
+                sym_speed_list += [sym_id]
+                speed = np.array(chnf.get_data()[2][name2chan(chnf,'SPD', item)])
+                if not syms.has_key(sym_id):
+                    syms.update({sym_id:{}})
+                syms[sym_id].update({'speed':{'data':speed,'units':'pu'}})
+#                    syms.update({'sym_speed_list':sym_speed_list})
+
+
+        # PGEN
+        if item == 'p_gen':
+            if channels[item] == 'all':                
+                sid,flag, string = -1,4,'NUMBER'
+                ierr, iarray = psspy.amachint(-1, flag, string)   
+            for item in iarray[0]:
+                sym_id = 'sym_{:d}'.format(item)
+                p_gen = np.array(chnf.get_data()[2][name2chan(chnf,'POWR', item)])
+                if not syms.has_key(sym_id):
+                    syms.update({sym_id:{}})
+                syms[sym_id].update({'p_gen':{'data':p_gen,'units':'pu-s'}})
+                
+        # QGEN
+        if item == 'q_gen':
+            if channels[item] == 'all':                
+                sid,flag, string = -1,4,'NUMBER'
+                ierr, iarray = psspy.amachint(-1, flag, string)   
+            for item in iarray[0]:
+                sym_id = 'sym_{:d}'.format(item)
+                q_gen = np.array(chnf.get_data()[2][name2chan(chnf,'VARS', item)])
+                if not syms.has_key(sym_id):
+                    syms.update({sym_id:{}})
+                syms[sym_id].update({'q_gen':{'data':q_gen,'units':'pu-s'}})
+
+        # Pt   NOT IMPLEMENTED IN CHSB
+        if item == 'p_t':
+            if channels[item] == 'all':                
+                sid,flag, string = -1,4,'NUMBER'
+                ierr, iarray = psspy.amachint(-1, flag, string)   
+            for item in iarray[0]:
+                sym_id = 'sym_{:d}'.format(item)
+                p_t = np.array(chnf.get_data()[2][name2chan(chnf,'PMECH', item)])
+                if not syms.has_key(sym_id):
+                    syms.update({sym_id:{}})
+                syms[sym_id].update({'p_t':p_t})
+                
+        # PLOD
+        if item == 'p_load':
+            if channels[item] == 'all':                
+                sid,flag, string = -1,4,'NUMBER'
+                ierr, iarray = psspy.aloadint(sid, flag, string) 
+            for item in iarray[0]:
+                load_id = 'load_{:d}'.format(item)
+                p_load = np.array(chnf.get_data()[2][name2chan(chnf,'PLOD', item)])
+                if not loads.has_key(load_id):
+                    loads.update({load_id:{}})
+                loads[load_id].update({'p_load':{'data':p_load,'units':'pu-s'}})
+
+#    results_dict['bus'].update(buses)             
+#    results_dict['sym'].update(syms)  
+#    results_dict['load'].update(loads)  
+#    results_dict['syms'] =  sym_speed_list   
+
+
+#    results_dict = {'sys':{'time':np.array(np.array(chnf.get_data()[2]['time']))},
+#                    'syms':[],
+#                    'loads':[],
+#                    'bus':{},
+#                    'sym':{},
+#                    'load':{}}
+#                    
+                    
+    values = chnf.chanid.values()[0]
+    variable_dict = {
+                     'ANGL':{'common_name':'phiu', 'element':'sym', 'units':'deg', 'tex':'$\sf \theta_{xxx}$'},
+                     'POWR':{'common_name':'p_gen', 'element':'sym', 'units':'pu', 'tex':'$\sf p_{gxxx}$'},
+                     'VARS':{'common_name':'q_gen', 'element':'sym', 'units':'pu', 'tex':'$\sf q_{qxxx}$'},
+                     'ETRM':{'common_name':'v_t', 'element':'sym', 'units':'pu', 'tex':'$\sf v_{txxx}$'},
+                     'EFD':{'common_name':'v_e', 'element':'sym', 'units':'pu', 'tex':'$\sf v_{fxxx}$'},
+                     'PMEC':{'common_name':'p_t', 'element':'sym', 'units':'pu', 'tex':'$\sf p_{mxxx}$'},
+                     'SPD': {'common_name':'speed', 'element':'sym', 'units':'pu', 'tex':'$\sf \omega_{xxx}$'},
+                     'PLOD': {'common_name':'p_load', 'element':'load', 'units':'pu', 'tex':'$\sf p_{lxxx}$'},
+                     'QLOD': {'common_name':'q_load', 'element':'load', 'units':'pu', 'tex':'$\sf q_{lxxx}$'},
+                     'FREQ': {'common_name':'freq', 'element':'bus', 'units':'pu', 'tex':'$\sf f_{xxx}$'},
+                     'VOLT': {'common_name':'u', 'element':'bus', 'units':'pu', 'tex':'$\sf u_{xxx}$'},
+                     'POWR_FLOW': {'common_name':'p_flow', 'element':'line', 'units':'pu', 'tex':'$\sf p_{xxx}$'},
+                     'VARS_FLOW': {'common_name':'q_flow', 'element':'line', 'units':'pu', 'tex':'$\sf q_{xxx}$'}
+                    }
+                    
+    for item in values:
+        value = values[item] 
+        variable = (values[item]).split()[0]
+#        print(value)
+        if item != 'time':
+
+            if value.split(']')[-1]  and not ('TO' in value):
+                bus = (values[item]).split()[1].split('[')[0]
+                id = (values[item]).split(']')[-1]
+                if id == '1':                
+                    bus_id = bus
+                else:          
+                    bus_id = bus + '_' + id 
+                if not results_dict[variable_dict[variable]['element']].has_key(bus_id):
+                    results_dict[variable_dict[variable]['element']].update({bus_id:{}})
+                if not results_dict[variable_dict[variable]['element']][bus_id].has_key(variable_dict[variable]['common_name']):
+                    results_dict[variable_dict[variable]['element']][bus_id].update({variable_dict[variable]['common_name']:{}})
+                results_dict[variable_dict[variable]['element']][bus_id][variable_dict[variable]['common_name']]['data'] = np.array(chnf.chandata.values()[0][item])  
+                results_dict[variable_dict[variable]['element']][bus_id][variable_dict[variable]['common_name']]['units'] = variable_dict[variable]['units']
+                results_dict[variable_dict[variable]['element']][bus_id][variable_dict[variable]['common_name']]['tex'] = variable_dict[variable]['tex']
+                
+                
+            if value.split(']')[-1] == ''  and not ('TO' in value):
+                bus = value.split()[1].split('[')[0]
+                if not results_dict[variable_dict[variable]['element']].has_key(bus):
+                    results_dict[variable_dict[variable]['element']].update({bus:{}})
+                if not results_dict[variable_dict[variable]['element']][bus].has_key(variable_dict[variable]['common_name']):
+                    results_dict[variable_dict[variable]['element']][bus].update({variable_dict[variable]['common_name']:{}})
+                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['data'] = np.array(chnf.chandata.values()[0][item])  
+                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['units'] = variable_dict[variable]['units']
+                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['tex'] = variable_dict[variable]['tex']
+                
+#            if 'TO' in value:
+#                bus_i = value.split()[1]
+#                bus_j = value.split()[3]
+#                ckt = value.split()[5]
+#                bus_id = bus_i + '_' + bus_j + '_' + ckt 
+#                if not results_dict[variable_dict[variable]['element']].has_key(bus):
+#                    results_dict[variable_dict[variable]['element']].update({bus:{}})
+#                if not results_dict[variable_dict[variable]['element']][bus].has_key(variable_dict[variable]['common_name']):
+#                    results_dict[variable_dict[variable]['element']][bus].update({variable_dict[variable]['common_name']:{}})
+#                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['data'] = np.array(chnf.chandata.values()[0][item])  
+#                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['units'] = variable_dict[variable]['units']
+#                results_dict[variable_dict[variable]['element']][bus][variable_dict[variable]['common_name']]['tex'] = variable_dict[variable]['tex']
+                
+        if item == 'time':
+            results_dict['sys']['time']  = np.array(np.array(chnf.get_data()[2]['time']))
+            
                 
 
-##  
-#
-#
-#def dict2h5_l3(file_name, dict_in, compression="gzip"):          
-#    f = h5py.File(file_name,'w')
-#    
-#    for test in data_dict:
-##        print test
-#        grp = f.create_group(test)
-#        for group in data_dict[test]:
-##            print group
-#            sub_grp = grp.create_group(group)
-#            for data in data_dict[test][group]:
-#                var_name = data
-#                var_values =  data_dict[test][group][data]
-##                print var_name, var_values
-#                sub_grp.create_dataset(var_name, data=var_values, compression=compression)
-#     
-#    f.close()
-#
-#
+#                                   
+            
+    return results_dict
 
 
-import xml.etree.ElementTree as ET
-from StringIO import StringIO
-import json
+def dict2hdf5(dictionary,hdf5_file):
+    
+    import hickle
+    hickle.dump(dictionary, hdf5_file)
+    
+def dir2dict(directory):
+    
+    dir_list = os.listdir(directory)
+    tests_dict = {}
+    for item in dir_list:
+        fileName, fileExtension = os.path.splitext(item)
+
+        if fileExtension == '.out':
+            print(fileName) 
+            results_dict = outfile2dict(os.path.join(directory,item)) 
+            tests_dict.update({fileName:results_dict})
 
 
-
-def interactive_svg(plt,svg_file,ids, curves, distance_factor=0.8):   
-    
-    # Apparently, this `register_namespace` method works only with
-    # python 2.7 and up and is necessary to avoid garbling the XML name
-    # space with ns0.
-    ET.register_namespace("","http://www.w3.org/2000/svg")
-
-
-
-    # Save SVG in a fake file object.
-    f = StringIO()
-    plt.savefig(f, format="svg")
-    
-    
-    script = '''<script type="text/ecmascript">
-        <![CDATA[
-    
-    	function init(evt)
-    	{
-    	    if ( window.svgDocument == null )
-    	    {
-    		svgDocument = evt.target.ownerDocument;
-    	    }
-    
-    	    tooltip = svgDocument.getElementById('tooltip');
-    	    tooltip_bg = svgDocument.getElementById('tooltip_bg');
-    
-    	}
-    
-    	function ShowTooltip(evt, mouseovertext)
-    	{
-         var distance_factor = %f;    
-    	    tooltip.setAttributeNS(null,"x",distance_factor*evt.clientX+11);
-    	    tooltip.setAttributeNS(null,"y",distance_factor*evt.clientY+27);
-    	    tooltip.firstChild.data = mouseovertext;
-    	    tooltip.setAttributeNS(null,"visibility","visible");
-    
-    	    length = tooltip.getComputedTextLength();
-    	    tooltip_bg.setAttributeNS(null,"width",length+8);
-    	    tooltip_bg.setAttributeNS(null,"x",distance_factor*evt.clientX+8);
-    	    tooltip_bg.setAttributeNS(null,"y",distance_factor*evt.clientY+14);
-    	    tooltip_bg.setAttributeNS(null,"visibility","visibile");
-    	}
-    
-    	function HideTooltip(evt)
-    	{
-    	    tooltip.setAttributeNS(null,"visibility","hidden");
-    	    tooltip_bg.setAttributeNS(null,"visibility","hidden");
-    	}
-    
-        ]]>
-      </script>''' %(distance_factor)
-    
-    style = """<style>
-        .caption{
-    	font-size: 14px;
-    	font-family: Arial;
-        }
-        .tooltip{
-    	font-size: 12px;
-        }
-        .tooltip_bg{
-    	fill: white;
-    	stroke: black;
-    	stroke-width: 1;
-    	opacity: 0.85;
-        }
-      </style>"""
-      
-    box = """<rect class="tooltip_bg" id="tooltip_bg"
-          x="0" y="0" rx="2" ry="2"
-          width="55" height="17" visibility="hidden"/>"""
-          
-    box_text =   """<text class="tooltip" id="tooltip"
-          x="0" y="0" visibility="hidden">Tooltip</text>"""
-          
-          
-      
-    # Create XML tree from the SVG file.
-    tree, xmlid = ET.XMLID(f.getvalue())
-    
-    tree.insert(0, ET.XML(style))
-    
-    
-    # Insert the script and save to file.
-    tree.insert(0, ET.XML(script))
-    
-
-    #tree.insert(0, ET.XML(box))
-    #svg_root = xmlid['svg']
-    #svg_root.set(onload="init(evt)")
-    tree.set( 'onload',"init(evt)")
-    
-    
-    for id_item, curve in zip(ids,curves.get_lines()):
+    return tests_dict
         
-        curve.set_gid(id_item)
-        el = xmlid[id_item]
-        el.set('onmousemove', "ShowTooltip(evt, '{:s}')".format(id_item))
-        el.set('onmouseout', "HideTooltip(evt)")
-
-    tree.append(ET.XML(box))
-    tree.append(ET.XML(box_text))
-    ET.ElementTree(tree).write(svg_file)
-
-
-
-
 def to_file(file_name, model, IBUS, ID):
      f = open(file_name + '.rst', 'w')
      f.write(toReST)
@@ -904,121 +1055,21 @@ def device_writer(model, IBUS, ID, models_dict):
 
 
 
-
-
-
-
-
-
-
-#plt.rcParams['svg.embed_char_paths'] = 'none'
-
 def test_118():
     
-    raw_dyr_dir = os.path.join(r'E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\jmm')
-    casedir = os.path.join(r'E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\jmm')
-#    raw_dyr_dir = os.path.join(r'C:\jmm')
-#    casedir = os.path.join(r'C:\jmm')
-    tests = [{'case_name':'ieee118_pvsyn_1','test_id':'v_ref_change_26_up_pvsyn_1', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
+    tests_obj = tests()
+    yaml_file = r'E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\tests\pvsync\ieee118pvsync_10\ieee118_pvsinc_tests.yaml'
+    tests_obj.set_up(yaml_file)
+    tests_results = tests_obj.run_tests()
 
-    tests = [{'case_name':'ieee118_pvsyn_10','test_id':'v_ref_change_26_up_pvsyn_10', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
-#    tests = [{'case_name':'ieee118_v32_modif','test_id':'v_ref_change_26_up', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
-    tests = [{'case_name':'ieee118_pvsyn_1_100mva','test_id':'v_ref_change_26_up_pvsyn_1', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
-#    tests = [{'case_name':'ieee118_v33_modif','test_id':'v_ref_change_26_up', 'rst_title':'v_ref_change_26_up', 'test_type':'v_ref_change',   'gen_bus':26, 'gen_id':'1', 'change':0.1}]
+    return tests_results
 
 
 
 
-    vip_buses = range(1,119)
-    
-    #case_name =  'ieee_12_g_ac78_b3' 
-    #raw_dyr_dir = os.path.join(r'E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_12_generic\ieee_12_g_ac78_b3\system')
-    #casedir = os.path.join(r'E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_12_generic\ieee_12_g_ac78_b3\jmm')
-    #tests = [{'test_id':'v_ref_change_2_up', 'rst_title':'v_ref_change_2_up', 'test_type':'v_ref_change',   'gen_bus':2, 'gen_id':'1', 'change':0.1}]
-    #vip_buses = range(1,13)
+def test_device_writer(case_dir, gen_types_file,file_name_dyr,file_name_rst):
     
 
-    #
-             
-    ##yaml_tests = open(os.path.join(casedir,'tests.yaml'), 'r')
-    ##tests = yaml.load(yaml_tests.read())
-    #tests = [
-    #         {'id':'p_ref_vsc_1_up_large', 'type':'p_ref',   'change_var':'Dp_1', 'change': Dp_large},
-    #         {'id':'p_ref_vsc_1_down_large', 'type':'p_ref', 'change_var':'Dp_1', 'change':-Dp_large},
-    #         {'id':'q_ref_vsc_1_up_large', 'type':'q_ref',   'change_var':'Dq_1', 'change': Dp_large},
-    #         {'id':'q_ref_vsc_1_down_large', 'type':'q_ref', 'change_var':'Dq_1', 'change':-Dp_large},
-    #         {'id':'q_ref_vsc_2_up_large', 'type':'q_ref',   'change_var':'Dq_2', 'change': Dp_large},
-    #         {'id':'q_ref_vsc_2_down_large', 'type':'q_ref', 'change_var':'Dq_2', 'change':-Dp_large}]
-    #         
-    #
-    #tests = [
-    #         {'id':'p_ref_vsc_1_up_small', 'type':'p_ref',   'change_var':'Dp_1', 'change': Dp_small},
-    #         {'id':'p_ref_vsc_1_down_small', 'type':'p_ref', 'change_var':'Dp_1', 'change':-Dp_small},
-    #         {'id':'q_ref_vsc_1_up_small', 'type':'q_ref',   'change_var':'Dq_1', 'change': Dp_small},
-    #         {'id':'q_ref_vsc_1_down_small', 'type':'q_ref', 'change_var':'Dq_1', 'change':-Dp_small},
-    #         {'id':'q_ref_vsc_2_up_small', 'type':'q_ref',   'change_var':'Dq_2', 'change': Dp_small},
-    #         {'id':'q_ref_vsc_2_down_small', 'type':'q_ref', 'change_var':'Dq_2', 'change':-Dp_small}]
-    #
-    #  
-        
-    #datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
-    #gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
-    #
-    #datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(1), usemask=True ) 
-    #gen_hydro_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
-    #
-    #
-    #datas = np.genfromtxt(os.path.join(casedir,'tgov_hygov_base.tsv'), skiprows=1, delimiter='\t', usecols=(2), usemask=True ) 
-    #gen_cond_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
-    #
-    #vip_buses = list(gen_thermal_buses) + list(gen_hydro_buses) + list(gen_cond_buses)
-    
-    
-    case_name = tests[0]['case_name']
-    outfile = os.path.join(casedir,case_name + '.out')
-    
-          
-    Dp_large = 100.0
-    Dp_small = 50
-     
-    data_dict = {}        
-    
-    rst_str_tests = ''
-    tests_results = {}
-    
-    psspy,dyntools,savdynfile,snpfile = psse(case_name,raw_dyr_dir,casedir,vip_buses)
-    
-    sid = -1
-    ierr, buses = psspy.abusint(sid, 2, 'NUMBER')
-    ierr, gen_buses = psspy.agenbusint(sid, 2, 'NUMBER')
-    
-    test_1 = test(psspy,dyntools,savdynfile,snpfile)
-    test_1.data = tests[0]
-    test_1.vip_buses = vip_buses
-    test_1.run(outfile)
-    test_1.run(outfile)
-    test_1.outfile2dict()
-    tests_results.update({tests[0]['test_id']:test_1.results_dict})
-    #for item in  tests:
-    #    instance_name = "test_{:s}".format(item['test_id'])
-    #    print(instance_name)
-    #    exec(instance_name + ' = test(psspy,dyntools,savdynfile,snpfile)')
-    #    exec(instance_name + ".data = item")  
-    #    exec(instance_name + ".vip_buses = vip_buses")  
-    #    exec(instance_name + ".run(outfile)")
-    #    exec(instance_name + ".outfile2dict()")
-    #    to_exec = "tests_results.update({'" + instance_name + "':" + instance_name + ".data_dict})"
-    #    print(to_exec)
-    #    exec(to_exec)
-    
-    tests_out = os.path.join(casedir,case_name + '.hf5')
-    
-    hickle.dump(tests_results, tests_out)
-
-def test_device_writer():
-    
-    case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm'
-    gen_types_file = 'tgov_hygov_pvsync_1.tsv'
     datas = np.genfromtxt(os.path.join(case_dir,gen_types_file), skiprows=1, delimiter='\t', usecols=(0), usemask=True ) 
     gen_thermal_buses = np.array(datas[np.logical_not(datas.mask)], dtype=np.integer)
     
@@ -1040,8 +1091,7 @@ def test_device_writer():
     import json
     models2dict =json.load(open(os.path.join(case_dir,'models_psse.json'),'r'))
     
-    file_name_rst = 'ieee118_pvsyn_1'
-    file_name_dyr = 'ieee118_pvsyn_1'
+
     f_dyr = open(os.path.join(case_dir,file_name_dyr + '.dyr'), 'w')
     f_rst = open(os.path.join(case_dir,file_name_rst + '.rst'), 'w')
     toDYR = ''  
@@ -1103,13 +1153,29 @@ def test_device_writer():
     
     np.savetxt('test.out', gen_raw_data, delimiter='\t') 
 
+def test_dev_wrtie():
+    
+    file_name_rst = 'ieee118_pvsync_4_100mva'
+    file_name_dyr = 'ieee118_pvsync_4_100mva'
+    case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/data/ieee118_pvsync/ieee118pvsync_1pv'
+    gen_types_file = 'tgov_hygov_pvsync_4.tsv'
+ 
+    file_name_rst = 'ieee118_pvsync_1_100mva'
+    file_name_dyr = 'ieee118_pvsync_1_100mva'
+    case_dir = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/data/ieee118_pvsync/ieee118pvsync_1pv'
+    gen_types_file = 'tgov_hygov_pvsync_1.tsv'
+    
+    test_device_writer(case_dir, gen_types_file, file_name_dyr, file_name_rst)
+    
+    
 if __name__ == "__main__":
-    
-    a = 1
-#    test_device_writer()
-    test_118()
-    
+#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\psse-simulation-automata\results\ieee12g_10_pvs_gen_trip_10.out"""
+    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results\ieee12g_10_pvs.hdf5"""  
+    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results"""
+    test_dict_1 = dir2dict(directory)
+    dict2hdf5(test_dict_1,hdf5_file)
 
-
-
-
+    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_pvs.hdf5"""  
+    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results"""
+    test_dict_2 = dir2dict(directory)
+    dict2hdf5(test_dict_2,hdf5_file)

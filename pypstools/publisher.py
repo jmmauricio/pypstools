@@ -215,8 +215,14 @@ class publish:
         figures = []
         
         for item_fig in ya:            
+            if item_fig.has_key('fig_height') and item_fig.has_key('fig_width'):
+                figure = plt.figure(figsize=(item_fig['fig_height'],item_fig['fig_width']))
+            else:
+                figure = plt.figure()
+                
+                
 
-            figure = plt.figure()
+            
             figures += [figure]
             
             n_axes = len(item_fig['axes'])
@@ -233,7 +239,7 @@ class publish:
                 else: offset=0.0                   
                     
                 for item_curve_group in item_axe['curves']:
-                    
+                    print(item_curve_group['file'])
                     h_tests = hickle.load(item_curve_group['file'])
                     
                     if not h_tests.has_key(item_curve_group['test_id']):
@@ -244,15 +250,39 @@ class publish:
                     
                     
                     h = h_tests[item_curve_group['test_id']]
-                            
-                    for (item_curve, item_legend) in zip(item_curve_group['elements'], item_curve_group['legends']):
+                    
+                    if not item_curve_group['elements'] == 'all_gen':
+                        for (item_curve, item_legend) in zip(item_curve_group['elements'], item_curve_group['legends']):
+    
+                            t = h['sys']['time']
 
-                        t = h['sys']['time']
-                        var = offset + scale*h[item_curve_group['element_type']][item_curve][item_curve_group['variable']]
-                        axe.plot(t,var, label=item_legend)
-                        
+                            if item_curve_group.has_key('scale'): scale = item_curve_group['scale']
+                            if item_curve_group.has_key('offset'): offset = item_curve_group['offset'] 
+
+                            var = offset + scale*h[item_curve_group['element_type']][str(item_curve)][item_curve_group['variable']]['data']
+
+                            axe.plot(t,var, label=item_legend, lw=2.0)
+
+                    if item_curve_group['elements'] == 'all_gen':  # to plot all generators
+                        for item_curve in h['syms']:
+                            item_legend = item_curve_group['legends']
+                            t = h['sys']['time']
+#                            print(h['sym'])
+                            var = offset + scale*h[item_curve_group['element_type']][item_curve][item_curve_group['variable']]['data']
+                            axe.plot(t,var, label=item_legend, lw=2.0)
+                            
+                            
                 axe.set_xlim((t[0], t[-1]))
-                axe.legend(loc='best')
+                
+                loc = 'best'
+                ncol = 1
+                if item_axe.has_key('legend_position'):
+                    loc = item_axe['legend_position']
+                if item_axe.has_key('ncol'):
+                    ncol = item_axe['ncol']
+                    
+                axe.legend(loc=loc, ncol=ncol)
+                    
                 axe.grid(True)
                 
                 axe.yaxis.set_major_formatter(ScalarFormatter(useOffset=False))
@@ -260,11 +290,11 @@ class publish:
                 if item_axe.has_key('xlabel'): axe.set_xlabel(item_axe['xlabel']) 
                 if item_axe.has_key('ylabel'): axe.set_ylabel(item_axe['ylabel']) 
                 if item_axe.has_key('ylimits'): axe.set_ylim(item_axe["ylimits"])
-            plt.savefig(item_fig['file']) 
+            figure.savefig(item_fig['file']) 
             
             
 
-        return figures
+        return figures,h_tests
 
 
     def plot_pq_w_a_large(self, test_id, individual_figure=True, data_sim = ''):
@@ -594,12 +624,12 @@ def psys_map(yaml_file, mask_oceans = True):
     ## System topology (from geojason)                
     from matplotlib.patches import Polygon
     
-    m.drawcoastlines()
-    m.drawmapboundary(fill_color='aqua')
-    m.fillcontinents(color='#fdbb84',lake_color='aqua')
-    m.drawstates()
-    m.drawcountries()                  
-    
+#    m.drawcoastlines()
+#    m.drawmapboundary(fill_color='aqua')
+#    m.fillcontinents(color='#fdbb84',lake_color='aqua')
+#    m.drawstates()
+#    m.drawcountries()                  
+#    
               
     for item in geo['features']:
         # substations
@@ -617,7 +647,16 @@ def psys_map(yaml_file, mask_oceans = True):
                     
                     x, y = m( lons, lats )
                     xy = zip(x,y)
-                    poly = Polygon( xy, edgecolor='blue', facecolor='red', alpha=1.0, lw=5 )
+                    facecolor='blue'
+                    if ya.has_key('buses_id'):
+                        if ya['buses_id'].has_key(int(item[u'properties'][u'id'])):
+                            if ya['buses_id'][int(item[u'properties'][u'id'])].has_key('facecolor'):
+                                facecolor = ya['buses_id'][int(item[u'properties'][u'id'])]['facecolor']
+                            if ya['buses_id'][int(item[u'properties'][u'id'])].has_key('label'):
+                                plt.gca().text(x[0],y[0],ya['buses_id'][int(item[u'properties'][u'id'])]['label'])
+                            
+                            
+                    poly = Polygon( xy, edgecolor=facecolor, facecolor=facecolor, alpha=1.0, lw=2 )
                     plt.gca().add_patch(poly) 
 
         # lines
@@ -638,20 +677,12 @@ def psys_map(yaml_file, mask_oceans = True):
     output_dir = ya['output_dir']
     plt.savefig(os.path.join(output_dir,'geo_psys_1.png'))
     plt.savefig(os.path.join(output_dir,'geo_psys_1.svg'))
-    return m    
+    return m, ya
 
 
 def heatmap(yaml_file, mask_oceans = True):
     '''Creates a heatmap considering geografical data, power system simulation results and grid topology
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     
     '''
     from mpl_toolkits.basemap import Basemap
@@ -715,8 +746,14 @@ def heatmap(yaml_file, mask_oceans = True):
                 m.plot(x,y) 
 
     test_id = ya['test_id']
-    
-    h = hickle.load(ya['tests_file'])
+    resuts_file_type = ya['resuts_file_type']
+    if resuts_file_type == 'hdf5':
+        h = hickle.load(ya['tests_file'])
+        
+    if resuts_file_type == 'dstxt':
+        from digsilent_simulation import ds2dict_2
+        test_dict, type_list =  ds2dict_2(ya['tests_file'])
+        h = {ya['test_id']:test_dict}
     
     t=np.array(h[test_id]['sys']['time'])
     t_index = np.where(t>ya['time'])[0][0]
@@ -728,11 +765,13 @@ def heatmap(yaml_file, mask_oceans = True):
     x_data = []
     y_data = []
     z_data = []
-    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
+#    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
+    buses = h[test_id]['sys']['buses']
     for item in geo['features']:
         # substations
         if item[u'properties'].has_key(u'tag'):
             if item[u'properties'][u'tag'] == u'substation':
+                if item[u'properties'][u'id'] in buses:
                     coords_list = item[u'geometry'][u'coordinates'][0]
                     x_d, y_d = m(coords_list[0][0],coords_list[0][1])
                     x_data += [x_d] 
@@ -742,11 +781,16 @@ def heatmap(yaml_file, mask_oceans = True):
                     y_data += [y_d]
                     
                     
-                    buses = h[test_id]['sys']['buses']
-                    idx = buses.index('bus_' + item[u'properties'][u'id'])
-                    var = h[test_id][element]['bus_' + item[u'properties'][u'id']][variable][t_index]
-                    z_data += [var,var]
                     
+#                    idx = buses.index('bus_' + item[u'properties'][u'id'])
+#                    print(buses)
+                
+                    idx = buses.index(item[u'properties'][u'id'])
+                    
+#                    var = h[test_id][element]['bus_' + item[u'properties'][u'id']][variable][t_index]
+                    var = h[test_id][element][item[u'properties'][u'id']][variable]['data'][t_index]
+                    z_data += [var,var]
+                
     z_min = np.min(z_data) 
     z_max = np.max(z_data) 
     z_average = np.average(np.array(z_data))   
@@ -789,7 +833,7 @@ def heatmap(yaml_file, mask_oceans = True):
     print(z_add.shape)
     grid_z = griddata(points, z_add, (grid_x, grid_y), method='linear')
 #    
-    levels =np.linspace(z_min,z_max,10)
+    levels =np.linspace(z_min,z_max,20)
 #    
     mask_oceans = True
     
@@ -818,6 +862,10 @@ def heatmap(yaml_file, mask_oceans = True):
     output_dir = ya['output_dir']
     plt.savefig(os.path.join(output_dir,'geo_psys_1.png'))
     plt.savefig(os.path.join(output_dir,'geo_psys_1.svg'))
+    
+    print(x_data)
+    print(y_data)
+    print(z_data)
     return m
     
     
@@ -1181,16 +1229,28 @@ def test_118_omega_animation():
 
 if __name__ == '__main__':
     
-#    pub = publish()
+    pub = publish()
 #    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/pub.yaml')
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/pvsync/pub.yaml')
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/pvsync/pub_ieee118_10.yaml')
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/pvsync/pub_ieee118_10_gtrip.yaml')
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/pvsync/pub_ieee118_1pv_gtrip.yaml')
+#    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/gtrip/pub_ieee12g_10_gtrip.yaml')
+#    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/ltrip/pub_ieee12g_10_ltrip.yaml')
+#    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/source/pvsync/ieee12g_pvsync_10/pub_ieee12g_10_line_trip.yaml')
+    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/source/pvsync/ieee12g_pvsync_10/pub_ieee12g_10_bus_fault.yaml')
 
-#    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/doc/geopsys.yaml'    
-#    m = heatmap(yaml_file, mask_oceans = False)
+#    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/gtrip/pub_ieee12g_10_v_ref.yaml')
 
-    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/geopsys.yaml'    
-    m = psys_map(yaml_file, mask_oceans = False)
+    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/geopsys_pvsinc_10.yaml'    
+    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/doc/geopsys_pvsinc_30.yaml'   
+##    m = heatmap(yaml_file, mask_oceans = False)
+#
+#    yaml_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/geopsys.yaml'    
+#    m, ya = psys_map(yaml_file, mask_oceans = False)
+#    hm = heatmap(yaml_file, mask_oceans = False)
+##        
 #        
-        
-#    test_118_omega_animation()
-#    test_118_plots()
+##    test_118_omega_animation()
+##    test_118_plots()
     

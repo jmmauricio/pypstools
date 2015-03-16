@@ -331,54 +331,14 @@ def gspreadsheet2geojason(spreadsheet_name, mail,password,geojson_path):
     wkb = gc.open(spreadsheet_name)
     wks_generators = wkb.worksheet('Generators') 
     
-    
-# se leen las lineas  
 
-    feat_geo_lines_list = []
-    wks_lines = wkb.worksheet('Lines')            
-    lines_ds_id = wks_lines.range('A2:A204')
-    lines_osm_id_1 = wks_lines.range('F2:F204')
-    lines_osm_id_2 = wks_lines.range('G2:G204')
-    lines_osm_id_3 = wks_lines.range('H2:H204')
-    lines_osm_id_4 = wks_lines.range('I2:I204')
-    lines_osm_id_5 = wks_lines.range('J2:J204')
-    lines_osm_id_6 = wks_lines.range('K2:K204')    
-    
-    ways_lines = zip(lines_osm_id_1,lines_osm_id_2,lines_osm_id_3,lines_osm_id_4,lines_osm_id_5,lines_osm_id_6)
-
-    
-    for ds_id, osm_ids in zip(lines_ds_id,ways_lines):  # una linea pueden ser varios way
-        print('line ds id: {:s}'.format(ds_id.value))        
-        lats, lons = [],[]         
-        line_id_exists = False        
-        for osm_id in  osm_ids:           # una linea pueden ser varios way
-            osm_id_way =  osm_id.value
-         
-            if osm_id_way:
-                line_id_exists = True
-                osm_data = osm.WayGet(osm_id_way)
-                print('    line osm way id: {:d}'.format(osm_data['id'])) 
-                
-                
-                osm_nodes = osm_data['nd']
-                for osm_node in osm_nodes:
-    #                print(osm.NodeGet(osm_node))
-                    lats += [osm.NodeGet(osm_node)['lat']]
-                    lons += [osm.NodeGet(osm_node)['lon']]
-                
-        if line_id_exists:        
-            line = geojson.LineString(zip(lons,lats)) 
-                              
-            feat_geo = geojson.Feature(geometry=line,  properties={"id": unicode(ds_id.value), "name": unicode(ds_id.value), "tag":'line'})   
-            feat_geo_lines_list += [feat_geo]      
-    
 # se leen las subestaciones    
     feat_geo_substations_list = []
     
     wks_substations = wkb.worksheet('Substations')
     
-    substations_ds_id = wks_substations.range('A2:A74')
-    substations_osm_id = wks_substations.range('B2:B74')
+    substations_ds_id = wks_substations.range('A2:A61')
+    substations_osm_id = wks_substations.range('B2:B61')
     
     
     for ds_id, osm_id in zip(substations_ds_id,substations_osm_id):
@@ -429,6 +389,51 @@ def gspreadsheet2geojason(spreadsheet_name, mail,password,geojson_path):
             feat_geo = geojson.Feature(geometry=poly,  properties={"id": unicode(ds_id.value), "name": unicode(ds_id.value), "tag":'substation'})   
             feat_geo_substations_list += [feat_geo]  
             
+
+# se leen las lineas  
+
+    feat_geo_lines_list = []
+    wks_lines = wkb.worksheet('Lines')            
+    lines_ds_id = wks_lines.range('A2:A204')
+    lines_osm_id_1 = wks_lines.range('F2:F204')
+    lines_osm_id_2 = wks_lines.range('G2:G204')
+    lines_osm_id_3 = wks_lines.range('H2:H204')
+    lines_osm_id_4 = wks_lines.range('I2:I204')
+    lines_osm_id_5 = wks_lines.range('J2:J204')
+    lines_osm_id_6 = wks_lines.range('K2:K204')    
+    
+    ways_lines = zip(lines_osm_id_1,lines_osm_id_2,lines_osm_id_3,lines_osm_id_4,lines_osm_id_5,lines_osm_id_6)
+
+    
+    for ds_id, osm_ids in zip(lines_ds_id,ways_lines):  # una linea pueden ser varios way
+        print('line ds id: {:s}'.format(ds_id.value))        
+        lats, lons = [],[]         
+        line_id_exists = False        
+        for osm_id in  osm_ids:           # una linea pueden ser varios way
+            osm_id_way =  osm_id.value
+         
+            if osm_id_way:
+                line_id_exists = True
+                osm_data = osm.WayGet(osm_id_way)
+                print('    line osm way id: {:d}'.format(osm_data['id'])) 
+                
+                
+                osm_nodes = osm_data['nd']
+                for osm_node in osm_nodes:
+    #                print(osm.NodeGet(osm_node))
+                    lats += [osm.NodeGet(osm_node)['lat']]
+                    lons += [osm.NodeGet(osm_node)['lon']]
+                
+        if line_id_exists:        
+            line = geojson.LineString(zip(lons,lats)) 
+                              
+            feat_geo = geojson.Feature(geometry=line,  properties={"id": unicode(ds_id.value), "name": unicode(ds_id.value), "tag":'line'})   
+            feat_geo_lines_list += [feat_geo]      
+    
+
+
+
+            
  
 
             
@@ -437,22 +442,93 @@ def gspreadsheet2geojason(spreadsheet_name, mail,password,geojson_path):
     feat_geo_total = geojson.FeatureCollection(feat_geo_substations_list + feat_geo_lines_list)
     
     geojson.dump(feat_geo_total, open(geojson_path, 'w'))
+    
+    return feat_geo_total
+
+
+def loc2network(loc_path):
+    '''Converts PSS/E .loc file to etwork file
+
+
+
+    '''    
+    
+    
+    loc_file = open(loc_path, 'r')
 
     
+    reading_buses = False
+    reading_branches = False
+
+    nodes = []
+    edges = []
     
+    for row in loc_file.readlines():
+
+        if (reading_buses == True) and (ord(row[0]) == 13):
+
+            reading_buses = False
+        
+        if reading_buses == True:
+            
+            x = 11.80
+            y =  4.30
+            angle =  90.0/180.0*np.pi  
+            length = 0.80
+            width = 0.02
+            
+            bus_id, x, y, angle, length = row.split()
+            
+            x = float(x)
+            y = float(y)
+            angle = float(angle)*np.pi/180.0 -np.pi/2.0
+            length = float(length)
+            
+            p1 =  (length/2.0 - 1j*width)*np.exp(1j*angle) + x + 1j*y
+            p2 =  (length/2.0 + 1j*width)*np.exp(1j*angle) + x + 1j*y
+            p4 = (-length/2.0 - 1j*width)*np.exp(1j*angle) + x + 1j*y
+            p3 = (-length/2.0 + 1j*width)*np.exp(1j*angle) + x + 1j*y   
+            
+            node = bus_id
+            
+            nodes += [node]
+            
+        if row[0:4]=='CART':
+            reading_buses = True      
+            
+        if row[0:4]=='BRAN':
+            reading_buses = False   
+            reading_branches = True  
+            
+        if (reading_branches == True):
+            s = row.split()
+            branch_nodes_list = s[3:]
+            print s
+            N_nodes = len(branch_nodes_list)/2 
+            edges += [tuple(s[0:2])]
+            node_list = []
+            for it_node in range(N_nodes):
+                
+                node = branch_nodes_list[(2*it_node):(2+2*it_node)]
+                node_tuple = tuple(map(float,node))
+                node_list += [node_tuple]    
+            
+            
+#            if len(node_list)>0:
+#                print(node_list)
+ 
+                       
+        if (reading_branches == True) and (ord(row[0]) == 13):
+            
+            reading_branches = False            
+
+        
+    return nodes,edges
+
     
-if __name__=="__main__":
-    mail = 'jmmauricio6@gmail.com'
-    file_password = open('/home/jmmauricio/password.yaml')
-    password = file_password.read().rstrip()
-    file_password.close()
-    
-    
-    geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/osm.json'
-    simplified_geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/osm_simplified.json'
-    spreadsheet_name = 'test_red_sing_id'
-    
-    out = gspreadsheet2geojason(spreadsheet_name,mail,password,geojson_path)
+def simplify_ways(geojson_path, simplified_geojson_path):
+
+
     
 
 
@@ -499,6 +575,48 @@ if __name__=="__main__":
     print('simplified coords number: {:d}'.format(simplified_coords_number))
     geojson.dump(geo, open(simplified_geojson_path, 'w'))
                 
+
+    
+if __name__=="__main__":
+    mail = 'jmmauricio6@gmail.com'
+    file_password = open('/home/jmmauricio/password.yaml')
+    password = file_password.read().rstrip()
+    file_password.close()
+    
+#    geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/osm.json'
+#    simplified_geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/osm_simplified.json'
+#    spreadsheet_name = 'red_sing_id'
+#    
+#    feat_geo_total = gspreadsheet2geojason(spreadsheet_name,mail,password,geojson_path)
+#    
+#    simplify_ways(geojson_path, simplified_geojson_path)
+#    
+    loc_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/tests/pvsync/jmm/gis/location.loc'
+    buses,edges = loc2network(loc_path)
+    
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    
+    G=nx.Graph()
+    G=nx.path_graph(118)
+#    G.add_nodes_from(buses)
+#    G.add_edges_from(edges[1:])
+    pos_ini = {1:(-1.0,-1.0)}
+    plt.figure(figsize=(15,15))
+    pos = nx.spring_layout(G, pos=pos_ini, fixed=[1], dim=2, k=0.001, iterations=500)
+    nx.draw_networkx(G,pos=pos)
+    #nx.draw_networkx_nodes(G)
+    
+    #plt.xlim(-0.05,1.05)
+    #plt.ylim(-0.05,1.05)
+    plt.axis('off')
+    plt.savefig('random_geometric_graph.png')
+    plt.show()
+
+
+    
+    
+
                 
                 
       
