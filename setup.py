@@ -1,22 +1,39 @@
-from setuptools import setup
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug  7 11:43:06 2014
 
-def readme():
-    with open('README.rst') as f:
-        return f.read()
+@author: jmmauricio
+"""
 
-setup(name='pypstools',
-      version='0.0.0a3',
-      description='Python power system library',
-      url='http://github.com/jmmauricio/pypstools',
-      author='Juan Manuel Mauricio',
-      author_email='jmmauricio6@gmail.com',
-      license='GPL V3',
-      packages=[],
-      install_requires = [],
-      zip_safe=False,
-      classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 2.7',
-        ],
-      keywords='power system control small signal restructuredtext',
-      )
+import os
+from setuptools import setup, find_packages
+
+# Utility function to read the README file.
+# Used for the long_description.  It's nice, because now 1) we have a top level
+# README file and 2) it's easier to type in the README file than to put a raw
+# string in below ...
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+version = "0.0.3c"
+
+setup(
+    name = "pypstools",
+    packages = ['pypstools'], # this must be the same as the name above
+    version = version,
+    author = "Juan Manuel Mauricio",
+    author_email = "jmmauricio6@gmail.com",
+    description = ("Tools for power system studies tools"),
+    long_description = """ools for power system studies tools using DigSILENT or PSS/E""",
+    license = "MIT",
+    keywords = "dynamics model simulation pss/e digsilent",
+    url = "https://github.com/jmmauricio/pypstools.git",
+    download_url = 'https://github.com/jmmauricio/pypstools/tarball/{:s}'.format(version), # I'll explain this in a second
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Topic :: Utilities",
+        "License :: OSI Approved :: BSD License",
+    ],
+    install_requires = [],
+    
+)
