@@ -915,13 +915,11 @@ if __name__ == '__main__':
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_base/results/ieee12g_base_small_signal.dat'
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/results/small_signal_channels_118.dat'
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/results/small_signal_channels_no_sta_118.dat'
-    mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_base/results/ieee12g_base_small_signal.dat'    
     A,B,C,D,states_dict = read_psse_abcd(mlis_file) 
     w,damp, freq, str_out = compute_damp(A)
     w,v_right,v_left,pf= ss_analysis(A)
     mode = 245
     mode = 186
-    mode = 19
     variable = ['omega']
 #    variable = 'all'
     plot_pf_mode(w,pf, mode, states_dict, variable, width = 0.5)

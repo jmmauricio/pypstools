@@ -1,0 +1,43 @@
+# YAML
+name: figura 1              # figure
+resuts_file_type: dstxt
+#tests_file: /home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/ieee118_v33_modif.hf5
+tests_file: /home/jmmauricio/Documents/public/workspace/pypstools/tests/test_out.txt
+test_id: v_ref_change_26_up
+psys_geo_file: ./osm_sing_simplified.json
+# bottom_lat: -42.666  #  neuquen
+# top_lat: -35.255
+# left_lon: -76.058
+# right_lon: -61.469
+# bottom_lat: -28.0  #  zamora
+# top_lat: -20.786
+# left_lon: -11.843
+# right_lon: 10.747
+# left_lon: -75.0 #  rep dominicana
+# top_lat: 21.0
+# right_lon: -68.0
+# bottom_lat: 16.0  
+# left_lon: -20.0 #  origen
+# top_lat: 20.0
+# right_lon: 20.0
+# bottom_lat: -20.0  
+# left_lon: -67.341 #  puerto rico
+# top_lat: 18.599
+# right_lon: -65.511
+# bottom_lat: 17.785 
+# left_lon: 101.777 #  australia
+# top_lat: -7.624
+# right_lon: 160.137
+# bottom_lat: -41.607 
+# left_lon: -104.733 #  south dakota
+# top_lat: 46.362
+# right_lon: -95.977
+# bottom_lat: 42.204 
+left_lon: -71.960 #  sing
+top_lat: -17.372
+right_lon: -64.666
+bottom_lat: -25.275
+output_dir: ./
+element: bus
+variable: u
+time: 1.5

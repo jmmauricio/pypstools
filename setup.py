@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-version = "0.0.4c"
+version = "0.0.6a41"
 
 setup(
     name = "pypstools",
@@ -24,7 +24,7 @@ setup(
     author = "Juan Manuel Mauricio",
     author_email = "jmmauricio6@gmail.com",
     description = ("Tools for power system studies tools"),
-    long_description = """ools for power system studies tools using DigSILENT or PSS/E""",
+    long_description = """Tools for power system studies tools using DigSILENT or PSS/E""",
     license = "MIT",
     keywords = "dynamics model simulation pss/e digsilent",
     url = "https://github.com/jmmauricio/pypstools.git",
