@@ -75,10 +75,57 @@ def h5_to_dict(file_name, dict_deepness=3):
 
 def loc2geojson(loc_path, geojson_path,bus_1,bus_2,bus_1_2_dist, bus_1_lon_lat):
     '''Converts PSS/E .loc file to geoJSON file
+    
+    Type: Function of tools module
 
+    ----
+    
+    Converts .loc PSS/E location file to geojson file.
+    
+    Parameters
+    ----------
+    loc_path : string 
+               .loc file path
+    
+    geojson_path : string
+               .geojson file path
+    
+    bus_1 : int
+            first buss to consider for scaling and positioning
+    
+    bus_2 : int            
+            second bus to consider for scaling
+    
+    
+    bus_1_2_dist : double
+                   distance  in meters between bus_1 and bus_2
+    
+    bus_1_lon_lat : tuple of doubles
+                    bus_1 position in (longitude,latitude) degrees.
+    
+    
+    Returns
+    -------
+    feat_geo_buses : dict 
+                     geojson format for buses
+    feat_geo_branches : dict 
+                     geojson format for branches
+    feat_geo_total : dict 
+                     geojson format for the total system
+    
+    Example
+    -------
 
-    buses_dist : list with two tuples 
-                 [(bus_1_number,x_1,y_1),(bus_2_number,x_2,y_2)]
+    >>> from pypstools.tools import loc2geojson
+    >>> loc_path = 'ieee12g_50_pvs.loc'
+    >>> geojson_path = 'ieee12g_50_pvs.json'        
+    >>> bus_1,bus_2 = 9,4
+    
+    >>> bus_1_lon_lat = (-101,44)  #  south dakota
+    >>> bus_1_2_dist = 500.0e3
+    
+    >>> feat_geo_buses, feat_geo_branches, feat_geo_total = loc2geojson(loc_path, geojson_path,bus_1,bus_2,bus_1_2_dist, bus_1_lon_lat)
+    
     '''    
     
     import geojson
@@ -306,7 +353,9 @@ def map_coords(func, obj):
 
 
 def test_loc2geojson():
-    #    #test_tools_dict2h5()
+
+    # http://www.geojsonlint.com/
+    
     loc_path = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/gis/bus_2_branch_1.loc'
     loc_path = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/gis/location.loc'
     geojson_path = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/jmm/gis/location.json'
@@ -654,10 +703,10 @@ def geo2substations(geojson_file):
 
     return substations_list
 
-def raw2pandas(csv_file):
-    raw_file = open(csv_file,'r')
+def raw2pandas(raw_file):
+    raw_obj = open(raw_file,'r')
     
-    raw = raw_file.readlines()
+    raw = raw_obj.readlines()
     
     it = 0
     it_trafo = 0
@@ -699,7 +748,6 @@ def raw2pandas(csv_file):
     file_trafos.write(rows_trafo)
     file_trafos.close()
     
-    
     bus_header = 'I, NAME, BASKV, IDE, AREA, ZONE, OWNER, VM, VA, NVHI, NVLO, EVHI, EVLO'.replace(' ','').split(',')
     load_header = 'I, ID, STATUS, AREA, ZONE, PL, QL, IP, IQ, YP, YQ, OWNER, SCALE, INTRPT'.replace(' ','').split(',')
     fixed_shunt_header = 'I, ID, STATUS, GL, BL'.replace(' ','').split(',')
@@ -707,40 +755,29 @@ def raw2pandas(csv_file):
     branches_header ='I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,MET,LEN,O1,F1,...,O4,F4'.replace(' ','').split(',')
     two_w_trafo_header ='I,J,K,CKT,CW,CZ,CM,MAG1,MAG2,NMETR,NAME,STAT,O1,F1,O2,F2,O3,F3,O4,F4,VECGRP,R1-2,X1-2,SBASE1-2WINDV1,NOMV1,ANG1,RATA1,RATB1,RATC1,COD1,CONT1,RMA1,RMI1,VMA1,VMI1,NTP1,TAB1,CR1,CX1,CNXA1,WINDV2,NOMV2 '.replace(' ','').split(',')
     
+    
     skiprows = 3
     nrows = end_bus-skiprows
-    bus_data = pd.read_csv(csv_file, skiprows=skiprows, header=None, nrows=nrows, names=bus_header)
-    
-    
+    bus_data = pd.read_csv(raw_file, skiprows=skiprows, header=None, nrows=nrows, names=bus_header)
     
     skiprows = end_bus+1
     nrows = end_load-end_bus-1
-    load_data = pd.read_csv(csv_file, skiprows=skiprows, header=None, nrows=nrows, names=load_header)
+    load_data = pd.read_csv(raw_file, skiprows=skiprows, header=None, nrows=nrows, names=load_header)
     
     skiprows = end_load+1
     nrows = end_shunt-end_load-1
-    fixed_shunt_data = pd.read_csv(csv_file, skiprows=skiprows, header=None, nrows=nrows, names=fixed_shunt_header)
+    fixed_shunt_data = pd.read_csv(raw_file, skiprows=skiprows, header=None, nrows=nrows, names=fixed_shunt_header)
 
     skiprows = end_shunt+1
     nrows = end_generator-end_shunt-1
-    generator_data = pd.read_csv(csv_file, skiprows=skiprows, header=None, nrows=nrows, names=generator_header)
-        
-    
-    
+    generator_data = pd.read_csv(raw_file, skiprows=skiprows, header=None, nrows=nrows, names=generator_header)
+
     skiprows = end_generator+1
     nrows = end_branch-end_generator-1
-    branch_data = pd.read_csv(csv_file, skiprows=skiprows, header=None, nrows=nrows, names=branches_header)
-    
+    branch_data = pd.read_csv(raw_file, skiprows=skiprows, header=None, nrows=nrows, names=branches_header)
 
-    
     transformer_data = pd.read_csv(StringIO(rows_trafo), header=None, names=two_w_trafo_header)
-    
-
-
-    
-
-   
-    
+         
     raw_df_dict = {'bus':bus_data,
                    'load':load_data,
                    'fixed_shunt':fixed_shunt_data,
@@ -748,17 +785,17 @@ def raw2pandas(csv_file):
                    'branch':branch_data,
                    'transformer':transformer_data
                    }
-
-    
     
     return raw_df_dict
     
 
 if __name__=="__main__":
     
-    test_loc2geojson()
-    csv_file='/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_10/system/ieee12g_pvsync_10.raw'
-    raw_df_dict =  raw2pandas(csv_file)
+#    test_loc2geojson()
+    raw_file='/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_10/system/ieee12g_pvsync_10.raw'
+    raw_df_dict =  raw2pandas(raw_file)
+    
+#    test_loc2geojson()
 
 #    
 

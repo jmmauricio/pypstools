@@ -596,7 +596,7 @@ def loc2geojson():
     print (hola)
 
     
-def psys_map(geo_data, plot_data):  
+def psys_map(geo_data, plot_data, ax=None):  
     
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
@@ -618,20 +618,45 @@ def psys_map(geo_data, plot_data):
                 
                 
     m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
-                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h',ax=ax)
                 
                 
                 
     ## System topology (from geojason)                
     from matplotlib.patches import Polygon
-    
-    m.drawcoastlines()
-    m.drawmapboundary(fill_color='#2980b9')
-    m.fillcontinents(color='#ffedcc',lake_color='#2980b9')
-    m.drawstates()
-    m.drawcountries()                  
+#    
+#    m.drawcoastlines()
+#    m.drawmapboundary(fill_color='#2980b9')
+#    m.fillcontinents(color='#ffedcc',lake_color='#2980b9')
+#    m.drawstates()
+#    m.drawcountries()                  
     
               
+
+ 
+    for item in geo['features']:
+        # lines
+        if not item[u'properties'].has_key(u'tag'):            
+            item[u'properties'].update({u'tag':''})
+            
+        if item[u'properties'][u'tag'].has_key(u'power'):
+            
+            if item[u'properties'][u'tag'][u'power'] == u'line':
+                
+
+                coords_list = item[u'geometry'][u'coordinates']
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                
+                x, y = m( lons, lats   )
+
+                m.plot(x,y, 'k')     
+
+
     for item in geo['features']:
         # substations
         if not item[u'properties'].has_key(u'tag'):            
@@ -662,29 +687,8 @@ def psys_map(geo_data, plot_data):
                         
                         
                 poly = Polygon( xy, edgecolor=facecolor, facecolor=facecolor, alpha=1.0, lw=2 )
-                plt.gca().add_patch(poly) 
-
-        # lines
-        if not item[u'properties'].has_key(u'tag'):            
-            item[u'properties'].update({u'tag':''})
-            
-        if item[u'properties'][u'tag'].has_key(u'power'):
-            
-            if item[u'properties'][u'tag'][u'power'] == u'line':
+                ax.add_patch(poly)     
                 
-
-                coords_list = item[u'geometry'][u'coordinates']
-                lons = []
-                lats = []
-                for coord in  coords_list: 
-                    
-                    lons += [coord[0]]
-                    lats += [coord[1]]
-                print(lons)
-                x, y = m( lons, lats )
-
-                m.plot(x,y, 'g')     
-    
     map_name = plot_data['map_name']
     out_dir = plot_data['out_dir']
     for item in plot_data['out_formats']:
@@ -693,7 +697,7 @@ def psys_map(geo_data, plot_data):
     return m
 
 
-def psys_heatmap(test_data, geo_data, plot_data, time):
+def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
     '''Creates a heatmap considering geografical data, power system simulation results and grid topology
 
     
@@ -718,7 +722,7 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
                 
                 
     m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
-                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h')
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h',ax=ax)
                 
                 
                 
@@ -770,12 +774,38 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
 
         test_dict, type_list =  ds.ds_txt_col_2_dict(test_data['tests_file'])
         h = {test_data['test_id']:test_dict}
-    
+
+    if test_data['resuts_file_type'] == 'h_dict':
+
+        h = {test_data['test_id']:test_dict}
+
+
+    if test_data['resuts_file_type'] == 'raw_dict':
+        element = test_data['element']
+        variable = test_data['variable']
+        ids = test_dict[element]['I']
+        h = {test_data['test_id']:{}}
+        
+        h[test_data['test_id']].update({'sys':{'time':[],
+                                        'buses':map(unicode,test_dict['bus']['I'].values)}})
+        h[test_data['test_id']].update({element:{}})   
+                           
+        for item  in test_dict[element]['I'].values:
+            a = test_dict[element]
+            var_value = (a[variable][a['I'] == item]).values
+            
+            h[test_data['test_id']][element].update({unicode(item):{variable:{'data':var_value}}})
+            
+            
+            
+        
     test_id = test_data['test_id']
     t=np.array(h[test_id]['sys']['time'])
     
-
-    t_index = np.where(t>time)[0][0]
+    if len(t) <= 1:
+        t_index = 0
+    else:
+        t_index = np.where(t>time)[0][0]
     
     element = test_data['element']
     variable  = test_data['variable']
@@ -793,11 +823,14 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
         if item[u'properties'][u'tag'].has_key(u'power'):
             
             if item[u'properties'][u'tag'][u'power'] == u'substation':
-
+#                print(item[u'properties'][u'id'])
+#                print(item[u'properties'][u'id'])
+#                print(buses[0]==item[u'properties'][u'id'])
                 if item[u'properties'][u'id'] in buses:
-#                    print(h[test_id][element].keys())
+                    
+
                     if h[test_id][element].has_key(item[u'properties'][u'id']): 
-#                        print(item[u'properties'][u'id'])
+
                         coords_list = item[u'geometry'][u'coordinates'][0]
                         x_d, y_d = m(coords_list[0][0],coords_list[0][1])
                         x_data += [x_d] 
@@ -807,9 +840,11 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
                         y_data += [y_d]
 
                         idx = buses.index(item[u'properties'][u'id'])
-
+#                        print(h[test_id][element])
                         var = h[test_id][element][item[u'properties'][u'id']][variable]['data'][t_index]
                         z_data += [var,var]
+#                        print(var)
+                        
     
     if plot_data.has_key('z_min'):
         z_min = plot_data['z_min']
@@ -841,7 +876,7 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
 
     boundary_x = np.hstack((             x_add, y_add*0+x_add[0],  y_add*0+x_add[-1],              x_add))
     boundary_y = np.hstack((x_add*0+min(y_add),            y_add,              y_add,  x_add*0+y_add[-1]))
-    boundary_z = np.hstack((boundary_x*0.0+z_average))
+    boundary_z = np.hstack((boundary_x*0.0))
 #    
     x_add = np.hstack((x_data,boundary_x))
     y_add = np.hstack((y_data,boundary_y))
@@ -852,38 +887,71 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
     grid_x, grid_y = np.meshgrid(x_grid,y_grid)
 
     points = np.vstack((x_add,y_add)).T
+    
+    if plot_data.has_key('mesgrid_interpolation'):
+        method = plot_data['mesgrid_interpolation']
+    else: method = 'linear'
+    
+    grid_z = griddata(points, z_add, (grid_x, grid_y), method=method)
+    bound_level = 0.8
+    bound_delta = 0.005
+     
+    index = np.where((np.logical_and(grid_z<(bound_level+bound_delta), grid_z>(bound_level-bound_delta))))
+    
+    print(len(index[0]))
+    if len(index[0])>0:
+    #    print(grid_z)    
+    #    print(index)
+    #    print(grid_x[index].shape)
+        x_add = np.hstack((x_add,grid_x[index]))
+        y_add = np.hstack((y_add,grid_y[index]))
+        print(index)
+        boundary_z_2 = np.hstack((grid_x[index]*0.0+z_average))
+        boundary_z = np.hstack((boundary_x*0.0+z_average))
+        z_add = np.hstack((z_data,boundary_z,boundary_z_2))
+    
+        points = np.vstack((x_add,y_add)).T
+    grid_z = griddata(points, z_add, (grid_x, grid_y), method=method)
 
-    grid_z = griddata(points, z_add, (grid_x, grid_y), method='nearest')
-#
-    print('z_min:' + str(z_min))
-    print('z_max:' + str(z_max))
+#    print('z_min:' + str(z_min))
+#    print('z_max:' + str(z_max))
     levels =np.linspace(z_min,z_max,20)
 #    
-    mask_oceans = True
     
     lons, lats = m(grid_x,grid_y,inverse=True)
     
     
 #    topo = interp(topoin,lons1,lats1,lons,lats,order=1)
 
-    if geo_data['mask_oceans'] == True:
-        print('masking oceans')
-        from mpl_toolkits.basemap import maskoceans
-        lonpt, latpt = m(grid_x,grid_y,inverse=True)
-        grid_z = maskoceans(lonpt, latpt, grid_z, resolution='f', grid=1.25)
 #
 #
 #        
-    m.contourf(grid_x, grid_y, grid_z, cmap=cm.coolwarm, zorder=0, extend='both', levels=levels)   
+    m.contourf(grid_x, grid_y, grid_z, cmap=cm.RdBu_r, extend='both', levels=levels)   
      
-    m.scatter(x_data, y_data, z_data)   
+    m.scatter(x_data, y_data, z_data*0.0+1)   
 #   
     land_color = '#ffedcc' 
     water_color = '#2980b9'    
-    m.drawcoastlines()
-    m.drawstates()
-    m.drawcountries()   
-    m.drawmapboundary(fill_color=water_color)
+
+    draw_map = True
+    if geo_data.has_key('draw_map'):   
+        draw_map = geo_data['draw_map']
+   
+    if draw_map:
+        m.drawcoastlines()
+        m.drawstates()
+        m.drawcountries()   
+        m.drawmapboundary(fill_color=water_color) 
+      
+        if geo_data['mask_oceans'] == True:
+            print('masking oceans')
+            from mpl_toolkits.basemap import maskoceans
+            lonpt, latpt = m(grid_x,grid_y,inverse=True)
+            grid_z = maskoceans(lonpt, latpt, grid_z, resolution='h', grid=1.25)
+
+
+
+
 #    m.fillcontinents(lake_color=water_color)
     
 
@@ -896,7 +964,248 @@ def psys_heatmap(test_data, geo_data, plot_data, time):
 
     return 1
     
+
+
+def psys_heatmap_add(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
+    '''Creates a heatmap considering geografical data, power system simulation results and grid topology
+
     
+    '''
+    from mpl_toolkits.basemap import Basemap
+    
+    import json
+    import numpy as np
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    
+
+    
+    
+    ## Map generation
+    geo = json.load(open(geo_data['geojson_file'], 'r'))
+    llcrnrlat=geo_data['bottom_lat']
+    urcrnrlat=geo_data['top_lat']
+    llcrnrlon=geo_data['left_lon']
+    urcrnrlon=geo_data['right_lon']
+    lat_ts=20
+                
+                
+    m = Basemap(projection='merc',llcrnrlat=llcrnrlat,urcrnrlat=urcrnrlat,\
+                llcrnrlon=llcrnrlon,urcrnrlon=urcrnrlon,lat_ts=lat_ts,resolution='h',ax=ax)
+                
+                
+                
+    ## System topology (from geojason)                
+    from matplotlib.patches import Polygon
+    
+                
+                
+    for item in geo['features']:
+        # substations
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'substation':
+                    coords_list = item[u'geometry'][u'coordinates'][0]
+                    lons = []
+                    lats = []
+                    for coord in  coords_list: 
+                        
+                        lons += [coord[0]]
+                        lats += [coord[1]]
+                    
+                    x, y = m( lons, lats )
+                    xy = zip(x,y)
+                    poly = Polygon( xy, facecolor='red', alpha=1.0 )
+                    plt.gca().add_patch(poly) 
+        # lines
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'line':
+                coords_list = item[u'geometry'][u'coordinates']
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                
+                x, y = m( lons, lats )
+
+                m.plot(x,y, 'r', lw=2) 
+
+
+
+    if test_data['resuts_file_type'] == 'hdf5':
+        h = hickle.load(test_data['tests_file'])
+        
+    if test_data['resuts_file_type'] == 'dstxt':
+        import pypstools
+
+        ds = pypstools.digsilent_simulation
+
+        test_dict, type_list =  ds.ds_txt_col_2_dict(test_data['tests_file'])
+        h = {test_data['test_id']:test_dict}
+
+    if test_data['resuts_file_type'] == 'h_dict':
+
+        h = {test_data['test_id']:test_dict}
+
+
+    if test_data['resuts_file_type'] == 'raw_dict':
+        element = test_data['element']
+        variable = test_data['variable']
+        ids = test_dict[element]['I']
+        h = {test_data['test_id']:{}}
+        
+        h[test_data['test_id']].update({'sys':{'time':[],
+                                        'buses':map(unicode,test_dict['bus']['I'].values)}})
+        h[test_data['test_id']].update({element:{}})   
+                           
+        for item  in test_dict[element]['I'].values:
+            a = test_dict[element]
+            var_value = (a[variable][a['I'] == item]).values
+            
+            h[test_data['test_id']][element].update({unicode(item):{variable:{'data':var_value}}})
+            
+            
+            
+        
+    test_id = test_data['test_id']
+    t=np.array(h[test_id]['sys']['time'])
+    
+    if len(t) <= 1:
+        t_index = 0
+    else:
+        t_index = np.where(t>time)[0][0]
+    
+    element = test_data['element']
+    variable  = test_data['variable']
+    
+    x_data = []
+    y_data = []
+    z_data = []
+
+    x_centers = []
+    y_centers = []
+    z_centers = []
+    
+    N = 200
+
+    x_min, y_min = m(geo_data['left_lon'],geo_data['bottom_lat'])
+    x_max, y_max = m(geo_data['right_lon'],geo_data['top_lat'])
+    
+    x_grid = np.linspace(x_min,x_max,N)
+    y_grid = np.linspace(y_min,y_max,N)
+    
+    grid_x, grid_y = np.meshgrid(x_grid,y_grid)
+    
+    grid_z = 0.0*grid_x
+    
+#    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
+    buses = h[test_id]['sys']['buses']
+    for item in geo['features']:
+        # substations
+        if not item[u'properties'].has_key(u'tag'):            
+            item[u'properties'].update({u'tag':''})
+            
+        if item[u'properties'][u'tag'].has_key(u'power'):
+            
+            if item[u'properties'][u'tag'][u'power'] == u'substation':
+#                print(item[u'properties'][u'id'])
+#                print(item[u'properties'][u'id'])
+#                print(buses[0]==item[u'properties'][u'id'])
+                if item[u'properties'][u'id'] in buses:
+                    
+
+                    if h[test_id][element].has_key(item[u'properties'][u'id']): 
+
+                        coords_list = item[u'geometry'][u'coordinates'][0]
+                        x_d_1, y_d_1 = m(coords_list[0][0],coords_list[0][1])
+                        x_data += [x_d_1] 
+                        y_data += [y_d_1]
+                        x_d_2, y_d_2 = m(coords_list[2][0],coords_list[2][1])
+                        x_data += [x_d_2] 
+                        y_data += [y_d_2]
+                        
+                        
+
+                        idx = buses.index(item[u'properties'][u'id'])
+
+                        var = h[test_id][element][item[u'properties'][u'id']][variable]['data'][t_index]
+                        z_data += [var,var]
+                    
+                    x_center = 0.5*(x_d_1 + x_d_2)
+                    y_center = 0.5*(y_d_1 + y_d_2)
+
+                    x_centers += [x_center] 
+                    y_centers += [y_center]
+                    z_centers += [var]        
+                    
+                    max_dist = 30000.0
+#                    it_j = 0
+                    for it_i in range(N):    
+#                        if np.abs(x_center - grid_x[it_i,it_j]) > max_dist: continue                       
+                        for it_j in range(N):
+                            if np.abs(x_center - grid_x[it_i,it_j])> max_dist: continue  
+                            if np.abs(y_center - grid_y[it_i,it_j])> max_dist: continue
+                            dist = ((x_center - grid_x[it_i,it_j])**2.0+(y_center - grid_y[it_i,it_j])**2.0)**0.5
+                            z = max_dist-dist
+                            if z <= 0.0:
+                                z = 0.0
+                            grid_z[it_i, it_j] = grid_z[it_i, it_j] + z/max_dist*var
+#                    print(dist)
+                                
+
+    if plot_data.has_key('z_min'):
+        z_min = plot_data['z_min']
+    else:
+        z_min = np.min(z_data) 
+                
+    if plot_data.has_key('z_max'):
+        z_max = plot_data['z_max']
+    else:
+        z_max = np.max(z_data)
+    
+    z_average = (z_min+z_max)/2.0  
+                        
+    levels =np.linspace(z_min,z_max,20)
+   
+    lons, lats = m(grid_x,grid_y,inverse=True)
+    m.contourf(grid_x, grid_y, grid_z, cmap=cm.RdBu_r, extend='both', levels=levels)     
+     
+#    m.scatter(x_centers, y_centers, z_centers)   
+#   
+    land_color = '#ffedcc' 
+    water_color = '#2980b9'    
+
+    draw_map = True
+    if geo_data.has_key('draw_map'):   
+        draw_map = geo_data['draw_map']
+   
+    if draw_map:
+        m.drawcoastlines()
+        m.drawstates()
+        m.drawcountries()   
+        m.drawmapboundary(fill_color=water_color) 
+      
+        if geo_data['mask_oceans'] == True:
+            print('masking oceans')
+            from mpl_toolkits.basemap import maskoceans
+            lonpt, latpt = m(grid_x,grid_y,inverse=True)
+            grid_z = maskoceans(lonpt, latpt, grid_z, resolution='h', grid=1.25)
+
+
+
+
+#    m.fillcontinents(lake_color=water_color)
+    
+
+    
+    for item in plot_data['out_formats']:
+        out_dir = plot_data['out_dir']
+        plt.savefig(os.path.join(out_dir, 'map_' + test_id + '_{0:05d}.png'.format(int(1000*time))))
+        plt.close()
+       
+
+    return 1   
 #    for item in geo['features']:
 #    if item [u'properties'].has_key(u'tag'):
 #        if item [u'properties'][u'tag'] == u'substation':

@@ -80,6 +80,12 @@ def ds_txt_col_2_dict(results_path):
     '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
     Los resultados estan en una columna por paso de integración. 
     
+    Column Header
+    
+    Elemen                    Variable
+    
+    * Short Path and Name     * Parameter Name
+    
     
     Parameters
     ----------    
@@ -115,13 +121,19 @@ def ds_txt_col_2_dict(results_path):
    
     ds = open(results_path,'r')  # opens file
     
-    header = ds.readline()  
-    
+    header_1 = ds.readline()  
+    header_2 = ds.readline() 
     reading_header = True
     
     rows = 0
     
-    header_list = header.split(':')
+    
+    header_1_list = header_1.split('\t')
+    header_2_list = header_2.split('\t')
+    
+    print(header_1_list)
+    print(header_2_list)
+    
     test_dict['sys']['time']=np.array([float(header_list[1])])
     
     type_list = []
@@ -182,7 +194,192 @@ def ds_txt_col_2_dict(results_path):
     ds.close()
             
 
+def ds_2_dict(results_path):
+    '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
+    Los resultados estan en una columna por paso de integración. 
+    
+    
+    Parameters
+    ----------    
+    results_path : string
+                   path for the .txt file
+                   
+                   
+    Returns
+    -------
+    test_dict : dictionary
+                results as dictionaries with np.array                   
+                   
+    Example
+    -------
+                        
+    >>> results_path =  '../examples/gs_test.txt'
+    >>> test_dict = ds2hdf5_1(results_path)        
+    
+    '''    
+    
+    test_dict =   {'sys':{
+                          'time':[],
+                          'buses':[],
+                          'syms':[],
+                          'loads':[]
+                         },
+                   'bus':{},
+                   'sym':{},                       
+                   'load':{},
+                   'line':{}
+                   }
+       
+    ds = open(results_path,'r')  # opens file  
+    
+    
+    
+    header_1 = ds.readline()  
+    header_2 = ds.readline() 
 
+#    return header_1
+    header_1_list = header_1.replace('\r\n','').split('\t')
+    header_2_list = header_2.replace('\r\n','').split('\t')
+ 
+    names_list = []
+    elements_list = []
+    for item in header_1_list[1:]:
+        name_element = item.split('\\')[-1].split('.')
+        print(name_element)
+        elements_list +=  [name_element[1]]
+        names_list += [name_element[0]]
+
+#    item = header_1_list[-1]    
+#    name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
+#    elements_list += [name_element[1][:-2]]
+#    names_list += [name_element[0]]
+  
+    item = header_1_list[-1]    
+    name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
+    element = name_element[1][:-2]
+    name = name_element[0]
+   
+    
+
+    # results to the dict   
+    it_col = 0 
+    data = np.loadtxt(ds, delimiter='\t',skiprows=1, dtype=np.object )
+    test_dict['sys']['time']=data[:,it_col].astype(np.float)
+    
+    
+    
+    for name,element,variable_ds in zip(names_list, elements_list,header_2_list[1:]):
+        it_col += 1
+        ds2ps_dict = {'m:u1 in p.u.':('u','pu'),
+                      'm:fe':('fe', 'Hz'),
+                      'm:u1:bus1 in p.u.':('u','p.u.'),
+                      'm:P:bus1 in MW':('p','p.u.'),
+                      's:Q1 in Mvar':('q', 'Mvar'),
+                      's:P1 in MW':('q', 'MW'),
+                      's:ve in p.u.':('ve','p.u.'),
+                      's:ie in p.u.':('ie','p.u.'),
+                      'c:firel in deg':('phir','p.u.'),
+                      's:xspeed in p.u.':('speed','p.u.'),
+                      's:pt in p.u.':('pt','p.u.'), 
+                      's:xmt in p.u.':('xmt','p.u.'), 
+                      's:xme in p.u.':('xme','p.u.'), 
+                      's:cur1 in p.u.':('cur1','p.u.'), 
+                      's:pgt in p.u.':('pgt','p.u.'), 
+                      's:ut in p.u.':('ut','p.u.'),
+                      'm:Qsum:bus1 in Mvar':('q', 'Mvar'),
+                      'm:Psum:bus1 in MW':('p', 'MW'),
+                      'm:fehz in Hz':('fehz','Hz')
+                     }
+#        print(element,name,variable_ds)
+        
+        if ds2ps_dict.has_key(variable_ds):
+            variable = ds2ps_dict[variable_ds][0]
+            units = ds2ps_dict[variable_ds][1]
+        else:
+            variable = variable_ds
+            units = ''
+            
+        if element == 'ElmSym':
+            if not test_dict['sym'].has_key(name):
+                test_dict['sym'].update({name:{}})
+                test_dict['sys']['syms'] += [name]
+                 
+            test_dict['sym'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})
+            
+        if element == 'ElmTerm':
+            if not test_dict['bus'].has_key(name):
+                test_dict['bus'].update({name:{}})
+                test_dict['sys']['buses'] += [name]
+                
+            test_dict['bus'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})  
+            
+        if element == 'ElmLod':
+            if not test_dict['load'].has_key(name):
+                test_dict['load'].update({name:{}})
+                test_dict['sys']['loads'] += [name]
+                
+            test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
+            
+            
+            
+    
+#    
+#    type_list = []
+#    id_list = []
+#    variable_list = []
+#    unit_list = []
+#    while reading_header == True:
+#        
+#        header = ds.readline() 
+#        header_list = header.split(':')
+#        
+#
+#        
+#        if header_list[0]== 't':
+#           reading_header = False
+#
+#        else: 
+#            type_list += [header_list[0]]
+#            
+#            if header_list[0] == 'bus':
+#                test_dict['sys']['buses'] += [header_list[1]]
+#
+#            if header_list[0] == 'sym':
+#                test_dict['sys']['syms'] += [header_list[1]]
+#                
+#            id_list += [header_list[1]]
+#            variable_list += [header_list[2]]
+#            unit_list += [header_list[3].split('\t')[0]]
+#            if not test_dict[header_list[0]].has_key(header_list[1]):
+#                test_dict[header_list[0]].update({header_list[1]:{header_list[2]:{}}})
+#            if not test_dict[header_list[0]][header_list[1]].has_key(header_list[2]):
+#                test_dict[header_list[0]][header_list[1]].update({header_list[2]:{}})
+#            units = (header_list[3].split('\t')[0])
+#            value = float(header_list[3].split('\t')[1])
+#            test_dict[header_list[0]][header_list[1]][header_list[2]].update({'data':np.array([value])})
+#            test_dict[header_list[0]][header_list[1]][header_list[2]].update({'units':units})
+#        rows += 1
+#           
+#    element_data = zip(type_list,id_list,variable_list,unit_list) 
+#    data_row = header
+#    data_row_list = header_list 
+#    while data_row:
+#        for it in range(rows): 
+#            data_row_list = data_row.split(':')
+#            if data_row_list[0]=='t':
+#                test_dict['sys']['time'] = np.vstack((test_dict['sys']['time'], np.array([float(data_row_list[1])])))
+#            else:
+#                if len(data_row_list[0])>0:
+#                    element_type = element_data[it-1][0]
+#                    element_id = element_data[it-1][1]
+#                    element_variable = element_data[it-1][2]
+#                    element_unit = element_data[it-1][3]
+#                    previous_value = test_dict[element_type][element_id][element_variable]
+#                    data_row_value = np.array(float(data_row_list[0]))
+#                    previous_value = test_dict[element_type][element_id][element_variable]['data']
+#                    test_dict[element_type][element_id][element_variable]['data'] = np.hstack((previous_value, data_row_value))
+#            data_row = ds.readline()             
+    ds.close()
         
 #    data = np.loadtxt(ds, delimiter='\t',skiprows=1 )
 #    
@@ -210,15 +407,9 @@ def ds_txt_col_2_dict(results_path):
 #            print('line')     
 #        it += 1
         
-    return test_dict, type_list
+    return test_dict
  
 if __name__ == "__main__":
     
-    results_path =  '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/ds_sing_1.txt'
-    hdf5_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/osm/ds_sing_2.hdf5'
-    test_dict, type_list =  ds_txt_col_2_dict(results_path)
-    
-    import hickle
-    
-    hickle.dump(test_dict,open(hdf5_file,'w'),compression='lzf')
-    loaded = hickle.load(hdf5_file)
+#    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
+    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')

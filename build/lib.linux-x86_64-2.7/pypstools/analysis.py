@@ -455,9 +455,9 @@ def compute_damp(A):
     for it in range(n):
         if damp[it]<0.2:
             
-            str_out +=  '  {:6s}   {:5.2f}     {:5.2f}     {:5.2f}     {:5.2f}   '.format('**'+str(it+1)+'**',w[it].real, w[it].imag,damp[it], freq_hz[it]) + '\n'  
+            str_out +=  '  {:6s}   {:5.2f}     {:5.2f}     {:3.2f}     {:3.2f}   '.format('**'+str(it+1)+'**',w[it].real, w[it].imag,damp[it], freq_hz[it]) + '\n'  
         else:
-            str_out +=  '  {:4d}     {:5.2f}     {:5.2f}      {:5.2f}    {:5.2f} '.format(it+1,w[it].real, w[it].imag,damp[it], freq_hz[it]) + '\n'              
+            str_out +=  '  {:4d}     {:5.2f}     {:5.2f}      {:3.2f}    {:3.2f} '.format(it+1,w[it].real, w[it].imag,damp[it], freq_hz[it]) + '\n'              
             
     str_out += '='*8 + ' ' + '='*9 + ' ' + '='*9 + ' ' + '='*9 + ' ' + '='*9 + '\n'        
     return w,damp, freq, str_out
@@ -915,11 +915,14 @@ if __name__ == '__main__':
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_base/results/ieee12g_base_small_signal.dat'
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/results/small_signal_channels_118.dat'
     mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/INGELECTUS/ingelectus/projects/aress/code/tests/ieee_118/results/small_signal_channels_no_sta_118.dat'
+    mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_base/results/ieee12g_base_small_signal.dat'    
+    mlis_file = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_10/results/ieee12g_10_pvs_small_signal.dat'
     A,B,C,D,states_dict = read_psse_abcd(mlis_file) 
     w,damp, freq, str_out = compute_damp(A)
     w,v_right,v_left,pf= ss_analysis(A)
     mode = 245
     mode = 186
+    mode = 19
     variable = ['omega']
 #    variable = 'all'
     plot_pf_mode(w,pf, mode, states_dict, variable, width = 0.5)

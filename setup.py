@@ -5,6 +5,7 @@ Created on Thu Aug  7 11:43:06 2014
 @author: jmmauricio
 """
 
+# tabulate, hickle, pyyaml, cython
 import os
 from setuptools import setup, find_packages
 
@@ -15,7 +16,7 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-version = "0.0.6a41"
+version = "0.1.1"
 
 setup(
     name = "pypstools",
@@ -34,6 +35,6 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    install_requires = [],
+    install_requires = ['pandas'],
     
 )

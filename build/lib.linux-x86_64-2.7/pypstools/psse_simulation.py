@@ -1254,10 +1254,10 @@ if __name__ == "__main__":
 #    test_dict_1 = dir2dict(directory)
 #    dict2hdf5(test_dict_1,hdf5_file)
 
-#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs.hdf5"""  
-#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
-#    test_dict_1 = dir2dict(directory)
-#    dict2hdf5(test_dict_1,hdf5_file)
+    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs.hdf5"""  
+    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
+    test_dict_1 = dir2dict(directory)
+    dict2hdf5(test_dict_1,hdf5_file)
 #
 #
 #
@@ -1277,8 +1277,31 @@ if __name__ == "__main__":
 #    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.dat"""
 #    lsa2dat(in_file,out_file)
     
-    in_file  = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_118.lsa"""
-    out_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_118.dat"""
-    in_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_no_sta_118.lsa"""
-    out_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_no_sta_118.dat"""
-    lsa2dat(in_file,out_file)
+#    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.dat"""
+#    lsa2dat(in_file,out_file)
+
+#    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs_small_signal.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs_small_signal.dat"""
+#    lsa2dat_zeroes(in_file,out_file)
+#    
+#    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_50\results\ieee12g_50_pvs_small_signal.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_50\results\ieee12g_50_pvs_small_signal.dat"""
+#    lsa2dat_zeroes(in_file,out_file)
+#  
+
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results\ieee118_base_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#    
+    
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_10\results\ieee118_pvs_10.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_10\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)    
+#    in_file  = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_118.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_118.dat"""
+#    in_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_no_sta_118.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\INGELECTUS\ingelectus\projects\aress\code\tests\ieee_118\results\small_signal_channels_no_sta_118.dat"""
+#    lsa2dat(in_file,out_file)
