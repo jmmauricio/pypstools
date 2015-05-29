@@ -80,6 +80,12 @@ def ds_txt_col_2_dict(results_path):
     '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
     Los resultados estan en una columna por paso de integración. 
     
+    Column Header
+    
+    Elemen                    Variable
+    
+    * Short Path and Name     * Parameter Name
+    
     
     Parameters
     ----------    
@@ -223,9 +229,9 @@ def ds_2_dict(results_path):
                    'load':{},
                    'line':{}
                    }
+       
+    ds = open(results_path,'r')  # opens file  
     
-   
-    ds = open(results_path,'r')  # opens file
     
     
     header_1 = ds.readline()  
@@ -234,8 +240,6 @@ def ds_2_dict(results_path):
 #    return header_1
     header_1_list = header_1.replace('\r\n','').split('\t')
     header_2_list = header_2.replace('\r\n','').split('\t')
-    
-    
  
     names_list = []
     elements_list = []
@@ -245,17 +249,11 @@ def ds_2_dict(results_path):
         elements_list +=  [name_element[1]]
         names_list += [name_element[0]]
 
-    
 #    item = header_1_list[-1]    
 #    name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
 #    elements_list += [name_element[1][:-2]]
 #    names_list += [name_element[0]]
-
-
-
-
-
-    
+  
     item = header_1_list[-1]    
     name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
     element = name_element[1][:-2]
@@ -265,7 +263,8 @@ def ds_2_dict(results_path):
 
     # results to the dict   
     it_col = 0 
-    test_dict['sys']['time']=data[:,it_col]
+    data = np.loadtxt(ds, delimiter='\t',skiprows=1, dtype=np.object )
+    test_dict['sys']['time']=data[:,it_col].astype(np.float)
     
     
     
@@ -305,21 +304,21 @@ def ds_2_dict(results_path):
                 test_dict['sym'].update({name:{}})
                 test_dict['sys']['syms'] += [name]
                  
-            test_dict['sym'][name].update({variable:{'data':data[:,it_col],'units':units}})
+            test_dict['sym'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})
             
         if element == 'ElmTerm':
             if not test_dict['bus'].has_key(name):
                 test_dict['bus'].update({name:{}})
                 test_dict['sys']['buses'] += [name]
                 
-            test_dict['bus'][name].update({variable:{'data':data[:,it_col],'units':units}})  
+            test_dict['bus'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})  
             
         if element == 'ElmLod':
             if not test_dict['load'].has_key(name):
                 test_dict['load'].update({name:{}})
                 test_dict['sys']['loads'] += [name]
                 
-            test_dict['load'][name].update({variable:{'data':data[:,it_col],'units':units}})            
+            test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
             
             
             
@@ -412,4 +411,5 @@ def ds_2_dict(results_path):
  
 if __name__ == "__main__":
     
-    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
+#    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
+    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')

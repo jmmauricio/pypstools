@@ -1258,7 +1258,23 @@ if __name__ == "__main__":
     directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
     test_dict_1 = dir2dict(directory)
     dict2hdf5(test_dict_1,hdf5_file)
-#
+    fig_pvs_p = plt.figure()
+    
+    fig_pvs_p.set_size_inches(10.0,10.0)
+    
+    ax_pvs_p_gen_trip_9 = fig_pvs_p.add_subplot(1,1,1)
+    
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['p_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
+        
+    fig_pvs_p.show()
+
+    
+    
+
 #
 #
 #    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_50\results\ieee12g_50_pvs.hdf5"""  
