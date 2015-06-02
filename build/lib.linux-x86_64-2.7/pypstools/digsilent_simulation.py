@@ -195,8 +195,14 @@ def ds_txt_col_2_dict(results_path):
             
 
 def ds_2_dict(results_path):
-    '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
+    '''Funcion para pasar dekl .txt de resultados de digsilent a python dict.
     Los resultados estan en una columna por paso de integración. 
+    
+    Column Header
+    
+    Element                    Variable
+    
+    * Short Path and Name     * Parameter Name
     
     
     Parameters
@@ -216,18 +222,22 @@ def ds_2_dict(results_path):
     >>> results_path =  '../examples/gs_test.txt'
     >>> test_dict = ds2hdf5_1(results_path)        
     
-    '''    
+    '''     
     
     test_dict =   {'sys':{
                           'time':[],
                           'buses':[],
                           'syms':[],
-                          'loads':[]
+                          'loads':[],
+                          'genstats':[],
+                          'usrmodels':[],
                          },
                    'bus':{},
                    'sym':{},                       
                    'load':{},
-                   'line':{}
+                   'line':{},
+                   'genstat':{},
+                   'usrmodel':{},
                    }
        
     ds = open(results_path,'r')  # opens file  
@@ -273,9 +283,10 @@ def ds_2_dict(results_path):
         ds2ps_dict = {'m:u1 in p.u.':('u','pu'),
                       'm:fe':('fe', 'Hz'),
                       'm:u1:bus1 in p.u.':('u','p.u.'),
-                      'm:P:bus1 in MW':('p','p.u.'),
+                      'm:P:bus1 in MW':('p','MW'),
+                      'm:Q:bus1 in Mvar':('q','Mvar'),
                       's:Q1 in Mvar':('q', 'Mvar'),
-                      's:P1 in MW':('q', 'MW'),
+                      's:P1 in MW':('p', 'MW'),
                       's:ve in p.u.':('ve','p.u.'),
                       's:ie in p.u.':('ie','p.u.'),
                       'c:firel in deg':('phir','p.u.'),
@@ -288,7 +299,8 @@ def ds_2_dict(results_path):
                       's:ut in p.u.':('ut','p.u.'),
                       'm:Qsum:bus1 in Mvar':('q', 'Mvar'),
                       'm:Psum:bus1 in MW':('p', 'MW'),
-                      'm:fehz in Hz':('fehz','Hz')
+                      'm:fehz in Hz':('fehz','Hz'),
+                      's:i_bat in A':('i_bat','A')
                      }
 #        print(element,name,variable_ds)
         
@@ -320,8 +332,21 @@ def ds_2_dict(results_path):
                 
             test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
             
+        if element == 'ElmGenstat':
+            if not test_dict['genstat'].has_key(name):
+                test_dict['genstat'].update({name:{}})
+                test_dict['sys']['genstats'] += [name]
+                
+            test_dict['genstat'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})       
             
+        if element == 'ElmDsl':
+            if not test_dict['usrmodel'].has_key(name):
+                test_dict['usrmodel'].update({name:{}})
+                test_dict['sys']['usrmodels'] += [name]
+                
+            test_dict['usrmodel'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})       
             
+                       
     
 #    
 #    type_list = []
@@ -412,4 +437,5 @@ def ds_2_dict(results_path):
 if __name__ == "__main__":
     
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
-    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
+#    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
+    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')

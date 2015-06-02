@@ -1305,11 +1305,11 @@ if __name__ == "__main__":
 #    dict2hdf5(test_dict_1,hdf5_file)
 
     
-#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_pvs.hdf5"""  
-#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results"""
-#    test_dict_2 = dir2dict(directory)
-#    dict2hdf5(test_dict_2,hdf5_file)
-#
+    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_pvs.hdf5"""  
+    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results"""
+    test_dict_2 = dir2dict(directory)
+    dict2hdf5(test_dict_2,hdf5_file)
+
 #
 #    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.lsa"""
 #    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.dat"""

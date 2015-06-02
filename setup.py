@@ -18,7 +18,7 @@ from pip.download import PipSession
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-version = "0.1.1d"
+version = "0.1.6"
 
 reqs = []
 
@@ -29,7 +29,7 @@ setup(
     author = "Juan Manuel Mauricio",
     author_email = "jmmauricio6@gmail.com",
     description = ("Tools for power system studies tools"),
-    long_description = """Tools for power system studies tools using DigSILENT or PSS/E""",
+    long_description = """Tools for power system studies using DigSILENT or PSS/E""",
     license = "MIT",
     keywords = "dynamics model simulation pss/e digsilent",
     url = "https://github.com/jmmauricio/pypstools.git",

@@ -7,7 +7,6 @@ import numpy as np
 import scipy.linalg
 import scipy.integrate
 import pandas as pd
-import tabulate
 import h5py
 from StringIO import StringIO
 
