@@ -8,7 +8,6 @@ import numpy as np
 import scipy.linalg
 
 import analysis
-import hickle
 
 import xml.etree.ElementTree as ET
 from StringIO import StringIO
@@ -253,7 +252,8 @@ class tests:
 
 
     '''
-    
+    import hickle
+
     def __init__(self):
 #        self.psspy = psspy
 #        self.dyntools =dyntools
@@ -1262,14 +1262,36 @@ if __name__ == "__main__":
     
     fig_pvs_p.set_size_inches(10.0,10.0)
     
-    ax_pvs_p_gen_trip_9 = fig_pvs_p.add_subplot(1,1,1)
+    ax_pvs_p_gen_trip_9  = fig_pvs_p.add_subplot(4,1,1)
+    ax_pvs_p_gen_trip_10 = fig_pvs_p.add_subplot(4,1,2)
+    ax_pvs_p_gen_trip_11 = fig_pvs_p.add_subplot(4,1,3)
+    ax_pvs_p_gen_trip_12 = fig_pvs_p.add_subplot(4,1,4)
     
     for it_gen in range(13,19):
         ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['p_gen']['data'])
 
     for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
-        
+        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['q_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['q_gen']['data'])
+
+   
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['p_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['q_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['p_gen']['data'])
+
+    for it_gen in range(13,19):
+        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['q_gen']['data'])
+                    
     fig_pvs_p.show()
 
     

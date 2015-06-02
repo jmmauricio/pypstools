@@ -8,7 +8,9 @@ Created on Thu Aug  7 11:43:06 2014
 # tabulate, hickle, pyyaml, cython
 import os
 from setuptools import setup, find_packages
-
+import pip
+from pip.req import parse_requirements
+from pip.download import PipSession
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
 # README file and 2) it's easier to type in the README file than to put a raw
@@ -16,7 +18,9 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-version = "0.1.1"
+version = "0.1.1d"
+
+reqs = []
 
 setup(
     name = "pypstools",
@@ -35,6 +39,6 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    install_requires = ['pandas'],
+    install_requires = reqs,
     
 )

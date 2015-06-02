@@ -9,7 +9,7 @@ from __future__ import division, print_function
 
 import numpy as np
 import scipy.linalg
-import hickle
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import xml.etree.ElementTree as ET
@@ -210,7 +210,7 @@ class publish:
 
         '''        
         
-        
+        import hickle
         ya = yaml.load(open(yaml_file,'r').read())
 
         figures = []
@@ -310,7 +310,7 @@ class publish:
 
 
         
-
+        
         self.test_id = test_id
         self.data_dict =  hickle.load(self.hdf5file)
         

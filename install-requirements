@@ -1,0 +1,10 @@
+#!/bin/bash
+
+sudo apt-get update
+sudo apt-get install -y python python-pip python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran
+
+virtualenv venv
+
+source activate
+
+pip install -r requirements.txt
