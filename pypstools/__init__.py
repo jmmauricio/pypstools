@@ -1,5 +1,5 @@
 #(c) 2015 Juan Manuel Mauricio
-#__all__ = []
+__all__ = []
 #
 #import analysis
 #import publisher
@@ -8,4 +8,4 @@
 #import digsilent_simulation
 #
 #
-#__all__.extend(['analysis', 'publisher', 'tools', 'rst_tools','digsilent_simulation'])
+__all__.extend(['analysis', 'publisher', 'tools', 'rst_tools','digsilent_simulation'])
