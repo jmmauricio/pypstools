@@ -1254,71 +1254,126 @@ if __name__ == "__main__":
 #    test_dict_1 = dir2dict(directory)
 #    dict2hdf5(test_dict_1,hdf5_file)
 
-    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs.hdf5"""  
-    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
+
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_10\results\ieee12g_10_pv.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_10\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#    
+#
+    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results\ieee12g_30_pv.hdf5"""  
+    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results"""
     test_dict_1 = dir2dict(directory)
     dict2hdf5(test_dict_1,hdf5_file)
-    fig_pvs_p = plt.figure()
+
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_50\results\ieee12g_50_pv.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_50\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#    
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#    fig_pvs_p = plt.figure()
     
-    fig_pvs_p.set_size_inches(10.0,10.0)
-    
-    ax_pvs_p_gen_trip_9  = fig_pvs_p.add_subplot(4,1,1)
-    ax_pvs_p_gen_trip_10 = fig_pvs_p.add_subplot(4,1,2)
-    ax_pvs_p_gen_trip_11 = fig_pvs_p.add_subplot(4,1,3)
-    ax_pvs_p_gen_trip_12 = fig_pvs_p.add_subplot(4,1,4)
-    
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['p_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['q_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['q_gen']['data'])
-
-   
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['p_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['q_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['p_gen']['data'])
-
-    for it_gen in range(13,19):
-        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['q_gen']['data'])
-                    
-    fig_pvs_p.show()
-
-    
-    
-
+#    fig_pvs_p.set_size_inches(10.0,10.0)
+#    
+#    ax_pvs_p_gen_trip_9  = fig_pvs_p.add_subplot(4,1,1)
+#    ax_pvs_p_gen_trip_10 = fig_pvs_p.add_subplot(4,1,2)
+#    ax_pvs_p_gen_trip_11 = fig_pvs_p.add_subplot(4,1,3)
+#    ax_pvs_p_gen_trip_12 = fig_pvs_p.add_subplot(4,1,4)
+#    
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['p_gen']['data'])
 #
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_30_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_9']['sym'][str(it_gen)]['q_gen']['data'])
 #
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_30_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_10']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#   
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_30_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_11']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,19):
+#        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_30_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_30_pvs_gen_trip_12']['sym'][str(it_gen)]['q_gen']['data'])
+#                    
+#    fig_pvs_p.show()
+#
+#    
+#    
+#
+##
+##
 #    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_50\results\ieee12g_50_pvs.hdf5"""  
 #    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_50\results"""
 #    test_dict_1 = dir2dict(directory)
 #    dict2hdf5(test_dict_1,hdf5_file)
+##
+#    fig_pvs_p = plt.figure()
+#    
+#    fig_pvs_p.set_size_inches(10.0,10.0)
+#    
+#    ax_pvs_p_gen_trip_9  = fig_pvs_p.add_subplot(4,1,1)
+#    ax_pvs_p_gen_trip_10 = fig_pvs_p.add_subplot(4,1,2)
+#    ax_pvs_p_gen_trip_11 = fig_pvs_p.add_subplot(4,1,3)
+#    ax_pvs_p_gen_trip_12 = fig_pvs_p.add_subplot(4,1,4)
+#    
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_50_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_9']['sym'][str(it_gen)]['speed']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_9.plot(test_dict_1['ieee12g_50_pvs_gen_trip_9']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_9']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_50_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_10']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_10.plot(test_dict_1['ieee12g_50_pvs_gen_trip_10']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_10']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_50_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_11']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_11.plot(test_dict_1['ieee12g_50_pvs_gen_trip_11']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_11']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_50_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_12']['sym'][str(it_gen)]['p_gen']['data'])
+#
+#    for it_gen in range(13,21):
+#        ax_pvs_p_gen_trip_12.plot(test_dict_1['ieee12g_50_pvs_gen_trip_12']['sys']['time'],test_dict_1['ieee12g_50_pvs_gen_trip_12']['sym'][str(it_gen)]['q_gen']['data'])
+#
+#     
+#   
+#    fig_pvs_p.show()
 
     
-    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_pvs.hdf5"""  
-    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results"""
-    test_dict_2 = dir2dict(directory)
-    dict2hdf5(test_dict_2,hdf5_file)
+#    
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results"""
+#    test_dict_2 = dir2dict(directory)
+#    dict2hdf5(test_dict_2,hdf5_file)
 
 #
 #    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.lsa"""
 #    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.dat"""
 #    lsa2dat(in_file,out_file)
-    
-#    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.lsa"""
-#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_base\results\ieee12g_base_small_signal.dat"""
-#    lsa2dat(in_file,out_file)
-
+#    
+#    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results\ieee12g_10_pvs_small_signal.lsa"""
+#    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results\ieee12g_10_pvs_small_signal.dat"""
+#    lsa2dat_zeroes(in_file,out_file)
+#
 #    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs_small_signal.lsa"""
 #    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs_small_signal.dat"""
 #    lsa2dat_zeroes(in_file,out_file)

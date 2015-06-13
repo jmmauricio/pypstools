@@ -285,9 +285,35 @@ psse_models_dic={
         {'L+26':{'Description':u'SOC  TO BE READ BY THE PCC                                 '}}, 
         {'L+27':{'Description':u'IRRADIATION VARIATION FACTOR                               '}} 
         ]},
+'PVSYN2':{  #  ANEXO 15 MODELOS DINÁMICOS - Asep www.asep.gob.pa/electric/Anexos/ANEXO_15_expa.pdf
+    'CONs':[
+        {'J':{'Description':u'T1 (sec)','typical':5.0}},
+        {'J+1':{'Description':u'T2 (sec)','typical':0.05}},
+        {'J+2':{'Description':u'T3 (sec)','typical':0.95 }},
+        {'J+3':{'Description':u'K','typical':15.0}},
+        {'J+4':{'Description':u'T4 (sec)','typical':5.1}},
+        {'J+5':{'Description':u'T5 (sec)','typical':0.322}},
+        {'J+6':{'Description':u'T6 (sec)','typical':0.0}},
+        {'J+7':{'Description':u'TD (0<TD<12*DELT) (sec)','typical':0.002}},
+        {'J+8':{'Description':u'TMAX','typical':0.8}},
+        {'J+9':{'Description':u'TMIN','typical':0.387}},
+        {'J+10':{'Description':u'DROOP','typical':0.03}},
+        {'J+11':{'Description':u'TE','typical':0.05}}
+        ],
+    'ICONs':[
+        {'M':{'typical':0.03, 'Description':u'Droop control (0:Throttle, 1:Power)','typical':0}}
+        ],
+     'STATEs':[
+        {'K'  :{'Description':u"Df_t_p", 'name':'Df_t_p', 'tex':"$\sf \\Delta f'_t $"}},
+        {'K+1':{'Description':u"DV_t_m_p", 'name':'DV_t_m_p', 'tex':"$\sf  \\Delta V'_t $"}},
+        {'K+2':{'Description':u'omega', 'name':'omega','tex':'$\sf \\omega $'}},
+        {'K+3':{'Description':u'theta', 'name':'theta','tex':'$\sf \\theta $'}},
+        {'K+4':{'Description':u'xi_q (pu)', 'name':'xi_q', 'tex':'$\sf \\xi_q$'}},
+        {'K+5':{'Description':u'xi_p (radians)', 'name':'xi_p', 'tex':'$\sf \\xi_p$'}},  
+        {'K+6':{'Description':u'i_r_filt (pu)', 'name':'i_r_filt', 'tex':'$\sf i_r^{filt}$'}},
+        {'K+7':{'Description':u'i_i_filt (radians)', 'name':'i_i_filt', 'tex':'$\sf i_i^{filt}$'}}
+    ]},
 }
-
-
 
 
 '''

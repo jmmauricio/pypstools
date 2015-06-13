@@ -195,8 +195,14 @@ def ds_txt_col_2_dict(results_path):
             
 
 def ds_2_dict(results_path):
-    '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
+    '''Funcion para pasar dekl .txt de resultados de digsilent a python dict.
     Los resultados estan en una columna por paso de integración. 
+    
+    Column Header
+    
+    Element                    Variable
+    
+    * Short Path and Name     * Parameter Name
     
     
     Parameters
@@ -216,18 +222,22 @@ def ds_2_dict(results_path):
     >>> results_path =  '../examples/gs_test.txt'
     >>> test_dict = ds2hdf5_1(results_path)        
     
-    '''    
+    '''     
     
     test_dict =   {'sys':{
                           'time':[],
                           'buses':[],
                           'syms':[],
-                          'loads':[]
+                          'loads':[],
+                          'genstats':[],
+                          'usrmodels':[],
                          },
                    'bus':{},
                    'sym':{},                       
                    'load':{},
-                   'line':{}
+                   'line':{},
+                   'genstat':{},
+                   'usrmodel':{},
                    }
        
     ds = open(results_path,'r')  # opens file  
@@ -249,16 +259,11 @@ def ds_2_dict(results_path):
         elements_list +=  [name_element[1]]
         names_list += [name_element[0]]
 
-#    item = header_1_list[-1]    
-#    name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
-#    elements_list += [name_element[1][:-2]]
-#    names_list += [name_element[0]]
   
     item = header_1_list[-1]    
     name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
     element = name_element[1][:-2]
     name = name_element[0]
-   
     
 
     # results to the dict   
@@ -273,9 +278,10 @@ def ds_2_dict(results_path):
         ds2ps_dict = {'m:u1 in p.u.':('u','pu'),
                       'm:fe':('fe', 'Hz'),
                       'm:u1:bus1 in p.u.':('u','p.u.'),
-                      'm:P:bus1 in MW':('p','p.u.'),
+                      'm:P:bus1 in MW':('p','MW'),
+                      'm:Q:bus1 in Mvar':('q','Mvar'),
                       's:Q1 in Mvar':('q', 'Mvar'),
-                      's:P1 in MW':('q', 'MW'),
+                      's:P1 in MW':('p', 'MW'),
                       's:ve in p.u.':('ve','p.u.'),
                       's:ie in p.u.':('ie','p.u.'),
                       'c:firel in deg':('phir','p.u.'),
@@ -288,7 +294,8 @@ def ds_2_dict(results_path):
                       's:ut in p.u.':('ut','p.u.'),
                       'm:Qsum:bus1 in Mvar':('q', 'Mvar'),
                       'm:Psum:bus1 in MW':('p', 'MW'),
-                      'm:fehz in Hz':('fehz','Hz')
+                      'm:fehz in Hz':('fehz','Hz'),
+                      's:i_bat in A':('i_bat','A')
                      }
 #        print(element,name,variable_ds)
         
@@ -320,96 +327,29 @@ def ds_2_dict(results_path):
                 
             test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
             
+        if element == 'ElmGenstat':
+            if not test_dict['genstat'].has_key(name):
+                test_dict['genstat'].update({name:{}})
+                test_dict['sys']['genstats'] += [name]
+                
+            test_dict['genstat'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})       
             
+        if element == 'ElmDsl':
+            if not test_dict['usrmodel'].has_key(name):
+                test_dict['usrmodel'].update({name:{}})
+                test_dict['sys']['usrmodels'] += [name]
+                
+            test_dict['usrmodel'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})       
             
-    
-#    
-#    type_list = []
-#    id_list = []
-#    variable_list = []
-#    unit_list = []
-#    while reading_header == True:
-#        
-#        header = ds.readline() 
-#        header_list = header.split(':')
-#        
-#
-#        
-#        if header_list[0]== 't':
-#           reading_header = False
-#
-#        else: 
-#            type_list += [header_list[0]]
-#            
-#            if header_list[0] == 'bus':
-#                test_dict['sys']['buses'] += [header_list[1]]
-#
-#            if header_list[0] == 'sym':
-#                test_dict['sys']['syms'] += [header_list[1]]
-#                
-#            id_list += [header_list[1]]
-#            variable_list += [header_list[2]]
-#            unit_list += [header_list[3].split('\t')[0]]
-#            if not test_dict[header_list[0]].has_key(header_list[1]):
-#                test_dict[header_list[0]].update({header_list[1]:{header_list[2]:{}}})
-#            if not test_dict[header_list[0]][header_list[1]].has_key(header_list[2]):
-#                test_dict[header_list[0]][header_list[1]].update({header_list[2]:{}})
-#            units = (header_list[3].split('\t')[0])
-#            value = float(header_list[3].split('\t')[1])
-#            test_dict[header_list[0]][header_list[1]][header_list[2]].update({'data':np.array([value])})
-#            test_dict[header_list[0]][header_list[1]][header_list[2]].update({'units':units})
-#        rows += 1
-#           
-#    element_data = zip(type_list,id_list,variable_list,unit_list) 
-#    data_row = header
-#    data_row_list = header_list 
-#    while data_row:
-#        for it in range(rows): 
-#            data_row_list = data_row.split(':')
-#            if data_row_list[0]=='t':
-#                test_dict['sys']['time'] = np.vstack((test_dict['sys']['time'], np.array([float(data_row_list[1])])))
-#            else:
-#                if len(data_row_list[0])>0:
-#                    element_type = element_data[it-1][0]
-#                    element_id = element_data[it-1][1]
-#                    element_variable = element_data[it-1][2]
-#                    element_unit = element_data[it-1][3]
-#                    previous_value = test_dict[element_type][element_id][element_variable]
-#                    data_row_value = np.array(float(data_row_list[0]))
-#                    previous_value = test_dict[element_type][element_id][element_variable]['data']
-#                    test_dict[element_type][element_id][element_variable]['data'] = np.hstack((previous_value, data_row_value))
-#            data_row = ds.readline()             
+      
     ds.close()
         
-#    data = np.loadtxt(ds, delimiter='\t',skiprows=1 )
-#    
-
-#    it = 0               
-#    for item_head in header.split('\t'):
-#        items = item_head.split(':')
-#        if items[0]=='sys':
-#            if not test_dict['sys'].has_key(items[1]):
-#                test_dict['sys'].update({items[1]:[]})
-#            test_dict['sys'][items[1]]= data[:,it]
-#    
-#            print('sys')
-#        if items[0]=='bus':
-#            if not test_dict['bus'].has_key(items[1]):
-#                test_dict['bus'].update({items[1]:{}})
-#            if not test_dict['bus'][items[1]].has_key(items[2]):
-#                test_dict['bus'][items[1]].update({items[2]:[]})
-#            test_dict['bus'][items[1]][items[2]] = data[:,it]        
-#            test_dict['sys']['buses'] += test_dict['bus'][items[1]]
-#            print('bus')        
-#        if items[0]=='sym':
-#            print('sym')   
-#        if items[0]=='line':
-#            print('line')     
-#        it += 1
         
     return test_dict
  
 if __name__ == "__main__":
-    
+    import h5py
+    h_pvs   = h5py.File(hdf5_path,'w')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
-    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
+#    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
+    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')

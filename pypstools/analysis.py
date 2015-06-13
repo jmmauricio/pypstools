@@ -476,7 +476,7 @@ def plot_pf(pf):
 
     
 
-def plot_pf_mode(w,pf, mode, states_dict, variable = 'all', width = 0.5):
+def plot_pf_mode(w,pf, mode, states_dict, variable = 'all', width = 0.5, figsize=(15,6)):
     '''     
     Plots participation factors for a mode
     
@@ -493,6 +493,8 @@ def plot_pf_mode(w,pf, mode, states_dict, variable = 'all', width = 0.5):
                   example: states_dict = {'omega_1':{'number':1, 'tex':r'\omega_1'},'delta_1':{'number':2, 'tex':r'\delta_1'}}
     width       : double 
                   width of the bars in the bar-plot 
+                  
+    fig_size : tuple
     Returns
     -------
     fig : matplotlib figure instance
@@ -529,7 +531,7 @@ def plot_pf_mode(w,pf, mode, states_dict, variable = 'all', width = 0.5):
     import matplotlib.pyplot as plt
     n = pf.shape[0]
     fig = plt.figure()
-    fig.set_size_inches(15,6)
+    fig.set_size_inches(figsize)
     ax_pf_mode = fig.add_subplot(111)
     
     plt.title(u'Participation factors for mode: {:2.2f} +/- j{:2.3f} '.format(w[mode-1].real, w[mode-1].imag))
@@ -588,7 +590,6 @@ def plot_pf_mode(w,pf, mode, states_dict, variable = 'all', width = 0.5):
 
     return fig
 
-states = ['omega9','omega10','omega11','omega12']
 def mode_shape(v_right, mode, variable, states_dict, threshold=0.1):
     fig = plt.figure()
     
@@ -925,7 +926,7 @@ if __name__ == '__main__':
     mode = 19
     variable = ['omega']
 #    variable = 'all'
-    plot_pf_mode(w,pf, mode, states_dict, variable, width = 0.5)
+    plot_pf_mode(w,pf, mode, states_dict, variable='all', width = 0.5)
     variable = 'omega'
     threshold = 0.3
     fig = mode_shape(v_right, mode, variable, states_dict, threshold)
