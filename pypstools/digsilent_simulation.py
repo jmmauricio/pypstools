@@ -249,9 +249,9 @@ def ds_2_dict(results_path):
 
     
 #    return header_1
-    header_1_list = header_1.replace('\r\n','').split('\t')
-    header_2_list = header_2.replace('\r\n','').split('\t')
- 
+    header_1_list = header_1.replace('\r\n','').replace('\n','').split('\t')
+    header_2_list = header_2.replace('\r\n','').replace('\n','').split('\t')
+
     names_list = []
     elements_list = []
     for item in header_1_list[1:]:
@@ -262,7 +262,8 @@ def ds_2_dict(results_path):
   
     item = header_1_list[-1]    
     name_element = item.split('\\')[-1].split('.') # hay que evitar el final con \r\n
-    element = name_element[1][:-2]
+#    print(name_element)
+    element = name_element[1][:]
     name = name_element[0]
     
     
@@ -329,7 +330,7 @@ def ds_2_dict(results_path):
             test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
             
         if element == 'ElmGenstat':
-            if not (name in test_dict):
+            if not (name in test_dict['genstat']):
                 test_dict['genstat'].update({name:{}})
                 test_dict['sys']['genstats'] += [name]
                 
@@ -356,3 +357,4 @@ if __name__ == "__main__":
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')
     result_dict = ds_2_dict(os.path.join('..','tests','ds_simout.txt'))
+#    result_dict = ds_2_dict(r'C:\Users\jmmauricio\hola.txt')
