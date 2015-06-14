@@ -247,6 +247,7 @@ def ds_2_dict(results_path):
     header_1 = ds.readline()  
     header_2 = ds.readline() 
 
+    
 #    return header_1
     header_1_list = header_1.replace('\r\n','').split('\t')
     header_2_list = header_2.replace('\r\n','').split('\t')
@@ -255,7 +256,6 @@ def ds_2_dict(results_path):
     elements_list = []
     for item in header_1_list[1:]:
         name_element = item.split('\\')[-1].split('.')
-        print(name_element)
         elements_list +=  [name_element[1]]
         names_list += [name_element[0]]
 
@@ -265,10 +265,11 @@ def ds_2_dict(results_path):
     element = name_element[1][:-2]
     name = name_element[0]
     
-
+    
     # results to the dict   
     it_col = 0 
-    data = np.loadtxt(ds, delimiter='\t',skiprows=1, dtype=np.object )
+    data = np.loadtxt(ds, delimiter='\t',skiprows=2, dtype=np.float )
+
     test_dict['sys']['time']=data[:,it_col].astype(np.float)
     
     
@@ -299,7 +300,7 @@ def ds_2_dict(results_path):
                      }
 #        print(element,name,variable_ds)
         
-        if ds2ps_dict.has_key(variable_ds):
+        if variable_ds in ds2ps_dict:
             variable = ds2ps_dict[variable_ds][0]
             units = ds2ps_dict[variable_ds][1]
         else:
@@ -307,35 +308,35 @@ def ds_2_dict(results_path):
             units = ''
             
         if element == 'ElmSym':
-            if not test_dict['sym'].has_key(name):
+            if not (name in test_dict['sym']):
                 test_dict['sym'].update({name:{}})
                 test_dict['sys']['syms'] += [name]
                  
             test_dict['sym'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})
             
         if element == 'ElmTerm':
-            if not test_dict['bus'].has_key(name):
+            if not (name in test_dict['bus']):
                 test_dict['bus'].update({name:{}})
                 test_dict['sys']['buses'] += [name]
                 
             test_dict['bus'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})  
             
         if element == 'ElmLod':
-            if not test_dict['load'].has_key(name):
+            if not (name in test_dict['load']):
                 test_dict['load'].update({name:{}})
                 test_dict['sys']['loads'] += [name]
                 
             test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
             
         if element == 'ElmGenstat':
-            if not test_dict['genstat'].has_key(name):
+            if not (name in test_dict):
                 test_dict['genstat'].update({name:{}})
                 test_dict['sys']['genstats'] += [name]
                 
             test_dict['genstat'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})       
             
         if element == 'ElmDsl':
-            if not test_dict['usrmodel'].has_key(name):
+            if not (name in test_dict['usrmodel']):
                 test_dict['usrmodel'].update({name:{}})
                 test_dict['sys']['usrmodels'] += [name]
                 
@@ -349,7 +350,9 @@ def ds_2_dict(results_path):
  
 if __name__ == "__main__":
     import h5py
-    h_pvs   = h5py.File(hdf5_path,'w')
+    import os
+#    h_pvs   = h5py.File(hdf5_path,'w')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
-    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')
+#    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')
+    result_dict = ds_2_dict(os.path.join('..','tests','ds_simout.txt'))
