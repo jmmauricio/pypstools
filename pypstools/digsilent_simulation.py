@@ -297,7 +297,8 @@ def ds_2_dict(results_path):
                       'm:Qsum:bus1 in Mvar':('q', 'Mvar'),
                       'm:Psum:bus1 in MW':('p', 'MW'),
                       'm:fehz in Hz':('fehz','Hz'),
-                      's:i_bat in A':('i_bat','A')
+                      's:i_bat in A':('i_bat','A'),
+                      'n:u1:bus1 in p.u.':('u','p.u.'),
                      }
 #        print(element,name,variable_ds)
         
@@ -321,13 +322,21 @@ def ds_2_dict(results_path):
                 test_dict['sys']['buses'] += [name]
                 
             test_dict['bus'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})  
-            
+        print(element)
+        if element == 'IntMod':
+            if not (name in test_dict['load']):
+                test_dict['load'].update({name:{}})
+                test_dict['sys']['loads'] += [name]
+               
+            test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
+
         if element == 'ElmLod':
             if not (name in test_dict['load']):
                 test_dict['load'].update({name:{}})
                 test_dict['sys']['loads'] += [name]
-                
+               
             test_dict['load'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})            
+           
             
         if element == 'ElmGenstat':
             if not (name in test_dict['genstat']):
@@ -356,5 +365,5 @@ if __name__ == "__main__":
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/cdec_sing_10_14/code/results/Demanda Alta-Escenario 4_2_ANG2.txt')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/abengoa_ssp/errores_govs/200U16w_CC1plena')
 #    result_dict = ds_2_dict('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/master/pbetancourt/PBetancourt/digsilent/resultados/Caso_3_PUNTA CATALINA 02.txt')
-    result_dict = ds_2_dict(os.path.join('..','tests','ds_simout.txt'))
+    result_dict = ds_2_dict(os.path.join('..','tests','hola.txt'))
 #    result_dict = ds_2_dict(r'C:\Users\jmmauricio\hola.txt')
