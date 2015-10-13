@@ -12,8 +12,8 @@ import sys,os
 sys.path.insert(0,os.path.abspath(os.path.join(os.getcwd(),'..')))
 
 
-import pypstools
-tools = pypstools.tools
+import pypstools.tools as tools
+ 
 
 mail = 'jmmauricio6@gmail.com'
 file_password = open('/home/jmmauricio/password.yaml')
@@ -28,4 +28,3 @@ feat_geo_total = tools.gspreadsheet2geojason(spreadsheet_name, mail,password,geo
 
 
 tools.simplify_ways(geojson_path, simplified_geojson_path)
-  

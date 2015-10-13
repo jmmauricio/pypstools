@@ -1248,7 +1248,48 @@ def lsa2dat_zeroes(input,output):
 
    
 if __name__ == "__main__":
+    
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results\ieee118_base.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_10\results\ieee118_10_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_10\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+    
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_30\results\ieee118_30_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_30\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
 
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50\results\ieee118_50_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+# 
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50_night\resultss\ieee118_50n_pvs.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50_night\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
+#    
+    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50\results\ieee118_50_small_signal.lsa"""
+    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_50\results\ieee118_50_small_signal.dat"""
+    lsa2dat_zeroes(in_file,out_file)    
+    
+    in_file  = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results\ieee118_base_small_signal.lsa"""
+    out_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_118\ieee118_pvsync\code\ieee118_pvsync_base\results\ieee118_base_small_signal.dat"""
+    lsa2dat(in_file,out_file)        
+    
+    
+    fig, axs = plt.subplots(2,2, figsize=(8, 4))
+    
+#    for it_gen in [10, 26,69,80,89]: 
+#        axs[0,0].plot(test_dict_1['ieee118_50_pvs_gen_trip_89']['sys']['time'],test_dict_1['ieee118_50_pvs_gen_trip_89']['sym'][str(it_gen)]['p_gen']['data'])
+#    fig.show()
+
+   
 #    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results\ieee12g_10_pvs.hdf5"""  
 #    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_10\results"""
 #    test_dict_1 = dir2dict(directory)
@@ -1261,16 +1302,41 @@ if __name__ == "__main__":
 #    dict2hdf5(test_dict_1,hdf5_file)
 #    
 #
-    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results\ieee12g_30_pv.hdf5"""  
-    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results"""
-    test_dict_1 = dir2dict(directory)
-    dict2hdf5(test_dict_1,hdf5_file)
+#    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results\ieee12g_30_pv.hdf5"""  
+#    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_30\results"""
+#    test_dict_1 = dir2dict(directory)
+#    dict2hdf5(test_dict_1,hdf5_file)
 
+
+#    fig, axs = plt.subplots(2,2, figsize=(8, 4))
+#    
+#    for it_gen in range(9,15): 
+#        axs[0,0].plot(test_dict_1['ieee12g_30_pv_load_trip_1']['sys']['time'],test_dict_1['ieee12g_30_pv_load_trip_1']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[0,1].plot(test_dict_1['ieee12g_30_pv_load_trip_2']['sys']['time'],test_dict_1['ieee12g_30_pv_load_trip_2']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[1,0].plot(test_dict_1['ieee12g_30_pv_load_trip_3']['sys']['time'],test_dict_1['ieee12g_30_pv_load_trip_3']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[1,1].plot(test_dict_1['ieee12g_30_pv_load_trip_4']['sys']['time'],test_dict_1['ieee12g_30_pv_load_trip_4']['sym'][str(it_gen)]['p_gen']['data'])
+#    fig.show()
+##    
+    
+    
 #    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_50\results\ieee12g_50_pv.hdf5"""  
 #    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pv_50\results"""
 #    test_dict_1 = dir2dict(directory)
 #    dict2hdf5(test_dict_1,hdf5_file)
+#
+#
+#
+#    fig, axs = plt.subplots(2,2, figsize=(8, 4))
 #    
+#    for it_gen in range(9,15): 
+#        axs[0,0].plot(test_dict_1['ieee12g_50_pv_load_trip_1']['sys']['time'],test_dict_1['ieee12g_50_pv_load_trip_1']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[0,1].plot(test_dict_1['ieee12g_50_pv_load_trip_2']['sys']['time'],test_dict_1['ieee12g_50_pv_load_trip_2']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[1,0].plot(test_dict_1['ieee12g_50_pv_load_trip_3']['sys']['time'],test_dict_1['ieee12g_50_pv_load_trip_3']['sym'][str(it_gen)]['p_gen']['data'])
+#        axs[1,1].plot(test_dict_1['ieee12g_50_pv_load_trip_4']['sys']['time'],test_dict_1['ieee12g_50_pv_load_trip_4']['sym'][str(it_gen)]['p_gen']['data'])
+#    fig.show()
+##   
+
+    
 #    hdf5_file = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results\ieee12g_30_pvs.hdf5"""  
 #    directory = r"""E:\Documents\public\jmmauricio6\RESEARCH\benches\ieee_12_generic\code\ieee12g_pvsync_30\results"""
 #    test_dict_1 = dir2dict(directory)

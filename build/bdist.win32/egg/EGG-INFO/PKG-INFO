@@ -1,0 +1,15 @@
+Metadata-Version: 1.0
+Name: pypstools
+Version: 0.2.4
+Summary: Tools for power system studies tools
+Home-page: https://github.com/jmmauricio/pypstools.git
+Author: Juan Manuel Mauricio
+Author-email: jmmauricio6@gmail.com
+License: MIT
+Download-URL: https://github.com/jmmauricio/pypstools/tarball/0.2.4
+Description: Tools for power system studies using DigSILENT or PSS/E
+Keywords: dynamics model simulation pss/e digsilent
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: BSD License

@@ -8,7 +8,7 @@ Created on Fri Mar 20 07:32:22 2015
 import os
 
 
-directory = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/code/pvsync/ieee12g_pv_50'
+directory = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/ieee118_pvsync/code/ieee118_pv_50/simulations'
 
 
 def rename_files(old_string, new_string,directory):
@@ -27,16 +27,17 @@ def rename_files(old_string, new_string,directory):
             print(os.path.join(directory,fileName + fileExtension))
             os.rename(os.path.join(directory,fileName  + fileExtension), os.path.join(directory,new_fileName+   fileExtension))
     
-old_string = 'ieee12g_pvs_50_'
-new_string = 'ieee12g_pv_50_'
+old_string = 'ieee118_50_pvs'
+new_string = 'ieee118_50_pv'
 
 rename_files(old_string, new_string, directory)
 
 
-old_string = 'ieee12g_50_pvs'
-new_string = 'ieee12g_50_pv'
+old_string = 'ieee118_50_pvs'
+new_string = 'ieee118_50_pv'
 
-
+old_string = 'ieee118_pvsync_50'
+new_string = 'ieee118_pv_50'
 
 '''
 # old_string = 'ieee118_pvsync_base_load_trip_4'
