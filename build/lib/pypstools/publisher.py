@@ -596,7 +596,7 @@ def loc2geojson():
     print (hola)
 
     
-def psys_map(geo_data, plot_data, ax=None):  
+def psys_map(geo_data, plot_data, ax):  
     
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
@@ -694,6 +694,17 @@ def psys_map(geo_data, plot_data, ax=None):
     for item in plot_data['out_formats']:
         plt.savefig(os.path.join(out_dir, 'map_{:s}.{:s}'.format(map_name,item)))
         plt.close()
+    
+    draw_map = False
+    if geo_data.has_key('draw_map'):   
+        draw_map = geo_data['draw_map']
+   
+    if draw_map:
+
+        m.drawstates()
+        m.drawcountries()   
+
+        
     return m
 
 
@@ -768,11 +779,9 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
         h = hickle.load(test_data['tests_file'])
         
     if test_data['resuts_file_type'] == 'dstxt':
-        import pypstools
+        import pypstools.digsilent_simulation as ds
 
-        ds = pypstools.digsilent_simulation
-
-        test_dict, type_list =  ds.ds_txt_col_2_dict(test_data['tests_file'])
+        test_dict =  ds.ds_2_dict(test_data['tests_file'])
         h = {test_data['test_id']:test_dict}
 
     if test_data['resuts_file_type'] == 'h_dict':
@@ -802,6 +811,7 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
     test_id = test_data['test_id']
     t=np.array(h[test_id]['sys']['time'])
     
+   
     if len(t) <= 1:
         t_index = 0
     else:
@@ -814,7 +824,9 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
     y_data = []
     z_data = []
 #    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
-    buses = h[test_id]['sys']['buses']
+    buses = h[test_id]['bus'].keys()
+    
+    
     for item in geo['features']:
         # substations
         if not item[u'properties'].has_key(u'tag'):            
@@ -841,6 +853,8 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
 
                         idx = buses.index(item[u'properties'][u'id'])
 #                        print(h[test_id][element])
+                        print(item[u'properties'][u'id'])
+#                        if h[test_id][element][item[u'properties'][u'id']].has_key(variable):
                         var = h[test_id][element][item[u'properties'][u'id']][variable]['data'][t_index]
                         z_data += [var,var]
 #                        print(var)
@@ -861,7 +875,7 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
     x_data = np.array(x_data)
     y_data = np.array(y_data)    
     z_data = np.array(z_data)
-
+    
     xmargin=0
     ymargin=0
     
@@ -898,14 +912,14 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
      
     index = np.where((np.logical_and(grid_z<(bound_level+bound_delta), grid_z>(bound_level-bound_delta))))
     
-    print(len(index[0]))
+
     if len(index[0])>0:
     #    print(grid_z)    
     #    print(index)
     #    print(grid_x[index].shape)
         x_add = np.hstack((x_add,grid_x[index]))
         y_add = np.hstack((y_add,grid_y[index]))
-        print(index)
+
         boundary_z_2 = np.hstack((grid_x[index]*0.0+z_average))
         boundary_z = np.hstack((boundary_x*0.0+z_average))
         z_add = np.hstack((z_data,boundary_z,boundary_z_2))
@@ -962,9 +976,213 @@ def psys_heatmap(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
         plt.close()
        
 
-    return 1
+    return x_data, y_data, z_data
     
 
+def psys_scatter(test_data, geo_data, plot_data, time, test_dict, m, ax):
+    '''Creates a heatmap considering geografical data, power system simulation results and grid topology
+
+    
+    '''
+#    from mpl_toolkits.basemap import Basemap
+    
+    import json
+    import numpy as np
+    from scipy.interpolate import griddata
+    from matplotlib import cm
+    ## System topology (from geojason)                
+    from matplotlib.patches import Polygon
+        
+
+    
+    
+    ## Map generation
+    geo = json.load(open(geo_data['geojson_file'], 'r'))
+    llcrnrlat=geo_data['bottom_lat']
+    urcrnrlat=geo_data['top_lat']
+    llcrnrlon=geo_data['left_lon']
+    urcrnrlon=geo_data['right_lon']
+    lat_ts=20
+                
+                
+
+                
+                
+                
+
+                
+                
+    for item in geo['features']:
+        # substations
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'substation':
+                    coords_list = item[u'geometry'][u'coordinates'][0]
+                    lons = []
+                    lats = []
+                    for coord in  coords_list: 
+                        
+                        lons += [coord[0]]
+                        lats += [coord[1]]
+                    
+                    x, y = m( lons, lats )
+                    xy = zip(x,y)
+                    poly = Polygon( xy, facecolor='red', alpha=1.0 )
+                    plt.gca().add_patch(poly) 
+        # lines
+        if item[u'properties'].has_key(u'tag'):
+            if item[u'properties'][u'tag'] == u'line':
+                coords_list = item[u'geometry'][u'coordinates']
+                lons = []
+                lats = []
+                for coord in  coords_list: 
+                    
+                    lons += [coord[0]]
+                    lats += [coord[1]]
+                
+                x, y = m( lons, lats )
+
+                m.plot(x,y, 'r', lw=2) 
+
+
+
+    if test_data['resuts_file_type'] == 'hdf5':
+        h = hickle.load(test_data['tests_file'])
+        
+    if test_data['resuts_file_type'] == 'dstxt':
+        import pypstools.digsilent_simulation as ds
+
+        test_dict =  ds.ds_2_dict(test_data['tests_file'])
+        h = {test_data['test_id']:test_dict}
+
+    if test_data['resuts_file_type'] == 'h_dict':
+
+        h = {test_data['test_id']:test_dict}
+
+
+    if test_data['resuts_file_type'] == 'raw_dict':
+        element = test_data['element']
+        variable = test_data['variable']
+        ids = test_dict[element]['I']
+        h = {test_data['test_id']:{}}
+        
+        h[test_data['test_id']].update({'sys':{'time':[],
+                                        'buses':map(unicode,test_dict['bus']['I'].values)}})
+        h[test_data['test_id']].update({element:{}})   
+                           
+        for item  in test_dict[element]['I'].values:
+            a = test_dict[element]
+            var_value = (a[variable][a['I'] == item]).values
+            
+            h[test_data['test_id']][element].update({unicode(item):{variable:{'data':var_value}}})
+            
+            
+            
+        
+    test_id = test_data['test_id']
+    t=np.array(h[test_id]['sys']['time'])
+    
+   
+    if len(t) <= 1:
+        t_index = 0
+    else:
+        t_index = np.where(t>time)[0][0]
+    
+    element = test_data['element']
+    variable  = test_data['variable']
+    
+    x_data = []
+    y_data = []
+    z_data = []
+#    h[test_id]['sys']['buses'] = ['bus_{:d}'.format(num) for num in range(1,119)]
+    buses = h[test_id]['bus'].keys()
+    
+    
+    for item in geo['features']:
+        # substations
+        if not item[u'properties'].has_key(u'tag'):            
+            item[u'properties'].update({u'tag':''})
+            
+        if item[u'properties'][u'tag'].has_key(u'power'):
+            
+            if item[u'properties'][u'tag'][u'power'] == u'substation':
+#                print(item[u'properties'][u'id'])
+#                print(item[u'properties'][u'id'])
+#                print(buses[0]==item[u'properties'][u'id'])
+                if item[u'properties'][u'id'] in buses:
+                    
+
+                    if h[test_id][element].has_key(item[u'properties'][u'id']): 
+
+                        coords_list = item[u'geometry'][u'coordinates'][0]
+                        x_d, y_d = m(coords_list[0][0],coords_list[0][1])
+                        x_data += [x_d] 
+                        y_data += [y_d]
+                        x_d, y_d = m(coords_list[2][0],coords_list[2][1])
+                        x_data += [x_d] 
+                        y_data += [y_d]
+
+                        idx = buses.index(item[u'properties'][u'id'])
+#                        print(h[test_id][element])
+                        print(item[u'properties'][u'id'])
+#                        if h[test_id][element][item[u'properties'][u'id']].has_key(variable):
+                        var = h[test_id][element][item[u'properties'][u'id']][variable]['data'][t_index]
+                        z_data += [var,var]
+#                        print(var)
+                        
+    
+    if plot_data.has_key('z_min'):
+        z_min = plot_data['z_min']
+    else:
+        z_min = np.min(z_data) 
+                
+    if plot_data.has_key('z_max'):
+        z_max = plot_data['z_max']
+    else:
+        z_max = np.max(z_data)
+    
+    z_average = (z_min+z_max)/2.0   
+    
+    x_data = np.array(x_data)
+    y_data = np.array(y_data)    
+    z_data = np.array(z_data)
+    
+    xmargin=0
+    ymargin=0
+    
+    x_min, y_min = m(geo_data['left_lon'],geo_data['bottom_lat'])
+    x_max, y_max = m(geo_data['right_lon'],geo_data['top_lat'])
+    
+
+    m.scatter(x_data, y_data, c=z_data)   
+#   
+    land_color = '#ffedcc' 
+    water_color = '#2980b9'    
+
+    draw_map = True
+    if geo_data.has_key('draw_map'):   
+        draw_map = geo_data['draw_map']
+   
+#    if draw_map:
+#        m.drawcoastlines()
+#        m.drawstates()
+#        m.drawcountries()   
+#        m.drawmapboundary(fill_color=water_color) 
+      
+
+#    m.fillcontinents(lake_color=water_color)
+    
+
+    
+    for item in plot_data['out_formats']:
+        out_dir = plot_data['out_dir']
+        plt.savefig(os.path.join(out_dir, 'map_' + test_id + '_{0:05d}.png'.format(int(1000*time))))
+        plt.close()
+       
+
+    return x_data, y_data, z_data
+    
+    
+    
 
 def psys_heatmap_add(test_data, geo_data, plot_data, time, test_dict = {},ax=None):
     '''Creates a heatmap considering geografical data, power system simulation results and grid topology
@@ -1575,7 +1793,7 @@ if __name__ == '__main__':
 #    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/gtrip/pub_ieee12g_10_gtrip.yaml')
 #    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/ltrip/pub_ieee12g_10_ltrip.yaml')
 #    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/source/pvsync/ieee12g_pvsync_10/pub_ieee12g_10_line_trip.yaml')
-    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/source/pvsync/ieee12g_pvsync_10/pub_ieee12g_10_bus_fault.yaml')
+#    figures,h_tests = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/source/pvsync/ieee12g_pvsync_10/pub_ieee12g_10_bus_fault.yaml')
 
 #    figures = pub.publisher('/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/doc/pvsync/ieee12g_pvsync_10/gtrip/pub_ieee12g_10_v_ref.yaml')
 
@@ -1591,3 +1809,4 @@ if __name__ == '__main__':
 ##    test_118_omega_animation()
 ##    test_118_plots()
     
+

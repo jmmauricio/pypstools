@@ -8,7 +8,7 @@ import scipy.linalg
 import scipy.integrate
 import pandas as pd
 import h5py
-from StringIO import StringIO
+#from StringIO import StringIO
 
 def dict_to_h5(file_name, dict_in, dict_deepness=3):  
     ''' Saves a dictionary to hdf5 file
@@ -610,7 +610,7 @@ def loc2network(loc_path):
         if (reading_branches == True):
             s = row.split()
             branch_nodes_list = s[3:]
-            print s
+            print(s)
             N_nodes = len(branch_nodes_list)/2 
             edges += [tuple(s[0:2])]
             node_list = []
@@ -683,6 +683,8 @@ def simplify_ways(geojson_path, simplified_geojson_path):
     geojson.dump(geo, open(simplified_geojson_path, 'w'))
                 
 
+
+    
 def geo2substations(geojson_file):
     import json
     geo = json.load(open(geojson_file, 'r'))
@@ -803,13 +805,13 @@ def range2np(sheet, excel_range):
     return np_array
     
 
-def spreadsheet2geojason(spreadsheet_path,geojson_path, elements, fmt='geojson'):
+def spreadsheet2geojason(spreadsheet_path,geojson_path, elements, fmt='geojson', previous_dict={}):
     import xlrd
 
 
     import osmapi
     
-    dict_out = {}
+    dict_out = previous_dict
     
     osm = osmapi.OsmApi()
     wb = xlrd.open_workbook(spreadsheet_path)
@@ -820,178 +822,187 @@ def spreadsheet2geojason(spreadsheet_path,geojson_path, elements, fmt='geojson')
     feat_geo_lines_list = [] 
     feat_geo_substations_list = []
     feat_geo_terminals_list = []
+    feat_geo_generators_list = []
     
 
 # se leen las subestaciones   
 
-    if 'Buses' in elements: 
+    if 'Buses' in elements:
+
         feat_geo_substations_list = []
 
-        sh_substations = wb.sheet_by_name('Substations')
-        
+        sh_substations = wb.sheet_by_name('Substations')        
         substations_ds_id = sh_substations.col_values(0,1)
         substations_osm_id = sh_substations.col_values(1,1)
         
-        
-        for ds_id, osm_id in zip(substations_ds_id,substations_osm_id):
-    
-            osm_id_way =  osm_id
-            if osm_id_way:
-                          
-                osm_data = osm.WayGet(osm_id_way)
-                print('Terminals, osm id: {:d}'.format(osm_data['id'])) 
-                
-                lats, lons = [],[]
-                osm_nodes = osm_data['nd']
-                for osm_node in osm_nodes:        
-    #                print(osm.NodeGet(osm_node))
-                    lats += [osm.NodeGet(osm_node)['lat']]
-                    lons += [osm.NodeGet(osm_node)['lon']]
-                    
-                poly = geojson.Polygon([zip(lons,lats)]) 
-                                      
-                feat_geo = geojson.Feature(geometry=poly,  properties={"id": unicode(ds_id), 
-                                                                       "name": unicode(ds_id), 
-                                                                       "tag":{u'power':u'substation'}})   
-                feat_geo_substations_list += [feat_geo]            
-
-                lon = np.average(lons)
-                lat = np.average(lats)
-                if fmt == 'dict':
-                    if not dict_out.has_key('bus'):
-                        dict_out.update({'bus':{}})
-                    dict_out['bus'].update({ds_id:{'coordinates':[lon,lat]}})
-                
-                print(ds_id)
-                print(osm_data['id'])
-#                print('Substations, osm_id: {:d}, {:u}'.format(osm_data['id'],ds_id))     
-    
-    # se leen los terminals  
-    
         sh_terminals = wb.sheet_by_name('Terminals')            
         terminals_ds_id = sh_terminals.col_values(0,1) 
         terminals_osm_id = sh_terminals.col_values(1,1) 
-        
-        
-        for ds_id, osm_id in zip(terminals_ds_id,terminals_osm_id):
+
             
-            osm_id_way =  osm_id
-            if osm_id_way:
-                          
-                osm_data = osm.WayGet(osm_id_way)
-                
-                
-                lats, lons = [],[]
-                print(osm_id)
-                osm_nodes = osm_data['nd']
-                for osm_node in osm_nodes:
-    #                print(osm.NodeGet(osm_node))
-                    lat = osm.NodeGet(osm_node)['lat']
-                    lon = osm.NodeGet(osm_node)['lon']
-                    lats += [lat]
-                    lons += [lon]
+        for ds_id, osm_id in zip(substations_ds_id,substations_osm_id):
+            if not ds_id in dict_out['bus']:        
+                osm_id_way =  osm_id
+                if osm_id_way:
+                              
+                    osm_data = osm.WayGet(osm_id_way)
+                    print('Terminals, osm id: {:d}'.format(osm_data['id'])) 
                     
-                poly = geojson.Polygon([zip(lons,lats)]) 
-                                      
-                feat_geo = geojson.Feature(geometry=poly,  properties={"id": unicode(ds_id), 
-                                                                       "name": unicode(ds_id), 
-                                                                       "tag":{u'power': u'substation'}})   
-                tags_list = [u'name',u'operator', u'voltage'] 
-                for tag in tags_list:
-                    if osm_data[u'tag'].has_key(tag):  
-                        feat_geo[u'properties'][u'tag'].update({tag:osm_data[u'tag'][tag]})  
-                    else:
-                        feat_geo[u'properties'][u'tag'].update({tag:u''}) 
-                feat_geo_terminals_list += [feat_geo]  
-                
-            lon = np.average(lons)
-            lat = np.average(lats)
+                    lats, lons = [],[]
+                    osm_nodes = osm_data['nd']
+                    for osm_node in osm_nodes:        
+        #                print(osm.NodeGet(osm_node))
+                        lats += [osm.NodeGet(osm_node)['lat']]
+                        lons += [osm.NodeGet(osm_node)['lon']]
+                    if fmt == 'json':                    
+                        poly = geojson.Polygon([zip(lons,lats)]) 
+                                              
+                        feat_geo = geojson.Feature(geometry=poly,  properties={"id": unicode(ds_id), 
+                                                                               "name": unicode(ds_id), 
+                                                                               "tag":{u'power':u'substation'}})   
+                        feat_geo_substations_list += [feat_geo]            
+    
+                    lon = np.average(lons)
+                    lat = np.average(lats)
+                    if fmt == 'dict':
+                        if not 'bus' in dict_out:
+                            dict_out.update({'bus':{}})
+                        dict_out['bus'].update({ds_id:{'coordinates':[lon,lat]}})
+                    
+                    print(ds_id)
+                    print(osm_data['id'])
+    #                print('Substations, osm_id: {:d}, {:u}'.format(osm_data['id'],ds_id))     
+        
+        # se leen los terminals  
+        
+
+        
             
-            if fmt == 'dict':
-                if not dict_out.has_key('bus'):
-                    dict_out.update({'bus':{}})
-                dict_out['bus'].update({ds_id:{'coordinates':[lon,lat]}})
-                print(ds_id, ": {{'coordinates': [{:f},{:f}]}}, ".format(lon,lat))
+        for ds_id, osm_id in zip(terminals_ds_id,terminals_osm_id):
+            if not ds_id in dict_out['bus']:                  
+                osm_id_way =  osm_id
+                if osm_id_way:
+                              
+                    osm_data = osm.WayGet(osm_id_way)
+                    
+                    
+                    lats, lons = [],[]
+                    print(osm_id)
+                    osm_nodes = osm_data['nd']
+                    for osm_node in osm_nodes:
+        #                print(osm.NodeGet(osm_node))
+                        lat = osm.NodeGet(osm_node)['lat']
+                        lon = osm.NodeGet(osm_node)['lon']
+                        lats += [lat]
+                        lons += [lon]
+    
+                if fmt == 'json':                    
+                    poly = geojson.Polygon([zip(lons,lats)]) 
+                                          
+                    feat_geo = geojson.Feature(geometry=poly,  properties={"id": unicode(ds_id), 
+                                                                           "name": unicode(ds_id), 
+                                                                           "tag":{u'power': u'substation'}})   
+                    tags_list = [u'name',u'operator', u'voltage'] 
+                    for tag in tags_list:
+                        if osm_data[u'tag'].has_key(tag):  
+                            feat_geo[u'properties'][u'tag'].update({tag:osm_data[u'tag'][tag]})  
+                        else:
+                            feat_geo[u'properties'][u'tag'].update({tag:u''}) 
+                    feat_geo_terminals_list += [feat_geo]  
+                    
+                lon = np.average(lons)
+                lat = np.average(lats)
+                
+                if fmt == 'dict':
+                    if not 'bus' in dict_out:
+                        dict_out.update({'bus':{}})
+                    dict_out['bus'].update({ds_id:{'coordinates':[lon,lat]}})
+                    print(ds_id, ": {{'coordinates': [{:f},{:f}]}}, ".format(lon,lat))
                 
 #            print('Terminals, osm_id: {:d}, {:s}'.format(osm_data['id'],ds_id)) 
 # se leen las lineas  
 
-    if 'lines' in elements: 
+    if 'Lines' in elements: 
         feat_geo_lines_list = []
         sh_lines = wb.sheet_by_name('Lines')            
         lines_ds_id =sh_lines.col_values(0,1)
         lines_osm_id_1 = sh_lines.col_values(5,1)
-        lines_osm_id_2 = sh_lines.col_values(5,1)
-        lines_osm_id_3 = sh_lines.col_values(5,1)
-        lines_osm_id_4 = sh_lines.col_values(5,1)
-        lines_osm_id_5 = sh_lines.col_values(5,1)
-        lines_osm_id_6 = sh_lines.col_values(5,1)    
+        lines_osm_id_2 = sh_lines.col_values(6,1)
+        lines_osm_id_3 = sh_lines.col_values(7,1)
+        lines_osm_id_4 = sh_lines.col_values(8,1)
+        lines_osm_id_5 = sh_lines.col_values(9,1)
+        lines_osm_id_6 = sh_lines.col_values(10,1)    
         
         ways_lines = zip(lines_osm_id_1,lines_osm_id_2,lines_osm_id_3,lines_osm_id_4,lines_osm_id_5,lines_osm_id_6)
     
         
         for ds_id, osm_ids in zip(lines_ds_id,ways_lines):  # una linea pueden ser varios way
-            print(ds_id)
-    #        print('line ds id: {:s}'.format(ds_id))        
-            lats, lons = [],[]         
-            line_id_exists = False    
-            it_way = 0
-            for osm_id in  osm_ids:           # una linea pueden ser varios way
-            
-                osm_id_way =  osm_id
-                lats_way = [] # lats of current way
-                lons_way = [] # lons of current way         
-                if osm_id_way:
-                    line_id_exists = True
-                    osm_data = osm.WayGet(osm_id_way)
-                    print('    line osm way id: {:d}'.format(osm_data['id'])) 
-    
-                    
-                    osm_nodes = osm_data['nd']
-                    for osm_node in osm_nodes:
-                        lats_way += [osm.NodeGet(osm_node)['lat']] # lats of current way
-                        lons_way += [osm.NodeGet(osm_node)['lon']] # lons of current way
-                if it_way > 0 and len(lats_way)>0 and len(lats)>0:        
-                    last_way_end_lat = lats[-1]
-                    last_way_end_lon = lons[-1]
-                    next_way_start_lat = lats_way[0]
-                    next_way_start_lon = lons_way[0]
-                    next_way_end_lat = lats_way[-1]
-                    next_way_end_lon = lons_way[-1]
-                    
-                    dist_end_start = ((last_way_end_lat - next_way_start_lat)**2 + (last_way_end_lon - next_way_start_lon)**2)**0.5
-                    dist_end_end   = ((last_way_end_lat - next_way_end_lat)**2 + (last_way_end_lon - next_way_end_lon)**2)**0.5
-                    
-                    if dist_end_start <= dist_end_end:
-                        lats += lats_way # lats of current line
-                        lons += lons_way # lons of current line  
-        
-                    if dist_end_start > dist_end_end:
-                        lons_way.reverse() 
-                        lats_way.reverse()
-                        lats += lats_way # lats of current line
-                        lons += lons_way # lons of current line  
-                else:
-                        lats += lats_way # lats of current line
-                        lons += lons_way # lons of current line                 
-                it_way += 1
-            if line_id_exists:        
-                line = geojson.LineString(zip(lons,lats)) 
+            if not ds_id in dict_out['line']:
+                print(ds_id)
+        #        print('line ds id: {:s}'.format(ds_id))        
+                lats, lons = [],[]         
+                line_id_exists = False    
+                it_way = 0
+                for osm_id in  osm_ids:           # una linea pueden ser varios way
                 
-                    
-                feat_geo = geojson.Feature(geometry=line,  
-                                           properties={"id": unicode(ds_id), 
-                                                       "name": unicode(ds_id), 
-                                                       "tag":{u'power': u'line'}})   
-                tags_list = [u'frequency',u'cables', u'voltage',u'wires',u'operator'] 
-                for tag in tags_list:
-                    if osm_data[u'tag'].has_key(tag):  
-                        feat_geo[u'properties'][u'tag'].update({tag:osm_data[u'tag'][tag]})
-                    else:
-                        feat_geo[u'properties'][u'tag'].update({tag:u''})
-    
-                feat_geo_lines_list += [feat_geo]      
+                    osm_id_way =  osm_id
+                    lats_way = [] # lats of current way
+                    lons_way = [] # lons of current way         
+                    if osm_id_way:
+                        line_id_exists = True
+                        osm_data = osm.WayGet(osm_id_way)
+                        print('    line osm way id: {:d}'.format(osm_data['id'])) 
         
+                        
+                        osm_nodes = osm_data['nd']
+                        for osm_node in osm_nodes:
+                            lats_way += [osm.NodeGet(osm_node)['lat']] # lats of current way
+                            lons_way += [osm.NodeGet(osm_node)['lon']] # lons of current way
+                    if it_way > 0 and len(lats_way)>0 and len(lats)>0:        
+                        last_way_end_lat = lats[-1]
+                        last_way_end_lon = lons[-1]
+                        next_way_start_lat = lats_way[0]
+                        next_way_start_lon = lons_way[0]
+                        next_way_end_lat = lats_way[-1]
+                        next_way_end_lon = lons_way[-1]
+                        
+                        dist_end_start = ((last_way_end_lat - next_way_start_lat)**2 + (last_way_end_lon - next_way_start_lon)**2)**0.5
+                        dist_end_end   = ((last_way_end_lat - next_way_end_lat)**2 + (last_way_end_lon - next_way_end_lon)**2)**0.5
+                        
+                        if dist_end_start <= dist_end_end:
+                            lats += lats_way # lats of current line
+                            lons += lons_way # lons of current line  
+            
+                        if dist_end_start > dist_end_end:
+                            lons_way.reverse() 
+                            lats_way.reverse()
+                            lats += lats_way # lats of current line
+                            lons += lons_way # lons of current line  
+                    else:
+                            lats += lats_way # lats of current line
+                            lons += lons_way # lons of current line                 
+                    it_way += 1
+                if line_id_exists:        
+                    line = geojson.LineString(zip(lons,lats)) 
+                    
+                        
+                    feat_geo = geojson.Feature(geometry=line,  
+                                               properties={"id": ds_id, 
+                                                           "name": ds_id, 
+                                                           "tag":{u'power': u'line'}})   
+                    tags_list = [u'frequency',u'cables', u'voltage',u'wires',u'operator'] 
+                    for tag in tags_list:
+                        if tag in  osm_data[u'tag']:  
+                            feat_geo[u'properties'][u'tag'].update({tag:osm_data[u'tag'][tag]})
+                        else:
+                            feat_geo[u'properties'][u'tag'].update({tag:u''})
+        
+                    feat_geo_lines_list += [feat_geo]      
+            
+                if fmt == 'dict':
+                    if not 'line' in dict_out:
+                        dict_out.update({'line':{}})
+                    dict_out['line'].update({ds_id:{'coordinates':[lons,lats]}})
 
 
 
@@ -1020,11 +1031,11 @@ def spreadsheet2geojason(spreadsheet_path,geojson_path, elements, fmt='geojson')
                 lon = osm_data['lon']
                                   
                 point = geojson.Point((lon, lat))
-                feat_geo = geojson.Feature(geometry=point, properties={"id": unicode(ds_id)})   
+                feat_geo = geojson.Feature(geometry=point, properties={"id": ds_id})   
                 feat_geo_generators_list += [feat_geo]    
                 
                 if fmt == 'dict':
-                    if not dict_out.has_key('sym'):
+                    if not 'sym' in dict_out:
                         dict_out.update({'sym':{}})
                     dict_out['sym'].update({ds_id:{'coordinates':[lon,lat]}})
                     
@@ -1035,56 +1046,52 @@ def spreadsheet2geojason(spreadsheet_path,geojson_path, elements, fmt='geojson')
             
     feat_geo_total = geojson.FeatureCollection(feat_geo_substations_list + feat_geo_lines_list + feat_geo_generators_list)
     
-    geojson.dump(feat_geo_total, open(geojson_path, 'w'))
+#    geojson.dump(feat_geo_total, open(geojson_path, 'w'))
     
     return feat_geo_total,dict_out
     
+
+def simplify_ways_dict(geo_dict, epsilon):
+
+
+    
+
+
+#
+    from rdp import rdp
+
+    
+    coords_number = 0
+    simplified_coords_number = 0
+    for item in geo_dict['line']:
+        # lines
+        coords_list = np.array(geo_dict['line'][item]['coordinates']).T
+        if len(coords_list)>2:
+            coords_number += len(coords_list)
+            simplified_coords = rdp(coords_list,epsilon)
+            geo_dict['line'][item]['coordinates'] = [list(simplified_coords.T[0]),list(simplified_coords.T[1])]
+            simplified_coords_number += len(simplified_coords)
+            print('original coords number: {:d}'.format(coords_number))
+            print('simplified coords number: {:d}'.format(simplified_coords_number))
+    
+    return geo_dict
     
 if __name__=="__main__":
     
-#    test_loc2geojson()
-#    raw_file='/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_12_generic/code/ieee12g_pvsync_10/system/ieee12g_pvsync_10.raw'
-#    raw_df_dict =  raw2pandas(raw_file)
-    spreadsheet_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/red_sing_id.xlsx'
-    geojson_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/sing_geo.json'
-    json_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/sing.json'
-    feat_geo_total,dict_out = spreadsheet2geojason(spreadsheet_path,geojson_path, ['Generators','Buses'], fmt ='dict')
-    
     import json
-    json_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/sing.json'
-    #json.dumps(dict_out, open(json_path,'w', encoding='utf8'))    
-    json.dumps(dict_out, encoding='utf-8')
-#    test_loc2geojson()
-
-#    
-
-##    
-#    loc_path = '/home/jmmauricio/Documents/public/jmmauricio6/RESEARCH/benches/ieee_118/tests/pvsync/jmm/gis/location.loc'
-#    buses,edges = loc2network(loc_path)
-#    
-#    import networkx as nx
-#    import matplotlib.pyplot as plt
-#    
-#    G=nx.Graph()
-#    G=nx.path_graph(118)
-##    G.add_nodes_from(buses)
-##    G.add_edges_from(edges[1:])
-#    pos_ini = {1:(-1.0,-1.0)}
-#    plt.figure(figsize=(15,15))
-#    pos = nx.spring_layout(G, pos=pos_ini, fixed=[1], dim=2, k=0.001, iterations=500)
-#    nx.draw_networkx(G,pos=pos)
-#    #nx.draw_networkx_nodes(G)
-#    
-#    #plt.xlim(-0.05,1.05)
-#    #plt.ylim(-0.05,1.05)
-#    plt.axis('off')
-#    plt.savefig('random_geometric_graph.png')
-#    plt.show()
-#
-#
-#    
-#    
-#
-#                
-#                
-#      
+    
+#    spreadsheet_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/red_sing_id.xlsx'
+#    geojson_path = '/home/jmmauricio/Documents/public/workspace/pypstools/tests/sing_geo.json'
+    json_path = '/home/jmmauricio/Documents/public/workspace/pypstools/dev/geo_sing.json'
+    geo = json.load(open(json_path,'r'))
+#    geo['line'].pop('345 kV Central Salta-Andes')
+    feat_geo_total,geo_dict = spreadsheet2geojason(spreadsheet_path,geojson_path, ['Generators', 'Buses', 'Lines'], fmt ='dict', previous_dict= geo)
+    json_path = '/home/jmmauricio/Documents/public/workspace/pypstools/dev/geo_sing_2.json'
+    json.dump(geo_dict, open(json_path,'w'))
+    
+    geo = json.load(open(json_path,'r'))
+    geo_dict = simplify_ways_dict(geo, 0.01)
+    
+    json_path = '/home/jmmauricio/Documents/public/workspace/pypstools/dev/simple_sing.json'
+    json.dump(geo_dict, open(json_path,'w'))
+    

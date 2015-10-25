@@ -6,7 +6,7 @@ Created on Tue Feb 10 08:18:05 2015
 """
 
 import numpy as np
-
+import pandas as pd
 def ds2dict(results_path):
     '''Funcion para pasar de .txt de resultados de digsilent a .hdf5.
     Los resultados estan en una fila por paso de integración. 
@@ -240,7 +240,7 @@ def ds_2_dict(results_path):
                    'usrmodel':{},
                    }
        
-    ds = open(results_path,'r')  # opens file  
+    ds = open(results_path,'r', encoding="ISO-8859-1")  # opens file  
     
     
     
@@ -269,15 +269,17 @@ def ds_2_dict(results_path):
     
     # results to the dict   
     it_col = 0 
-    data = np.loadtxt(ds, delimiter='\t',skiprows=2, dtype=np.float )
-
+#    data = np.loadtxt(ds, delimiter='\t',skiprows=2, dtype=np.float )
+    data = pd.read_csv(results_path, delimiter='\t', skiprows=2).values
+#    print(ds)
     test_dict['sys']['time']=data[:,it_col].astype(np.float)
     
     
     
     for name,element,variable_ds in zip(names_list, elements_list,header_2_list[1:]):
         it_col += 1
-        ds2ps_dict = {'m:u1 in p.u.':('u','pu'),
+        ds2ps_dict = {'m:u in p.u.':('u','pu'),
+                      'm:u1 in p.u.':('u','pu'),
                       'm:fe':('fe', 'Hz'),
                       'm:u1:bus1 in p.u.':('u','p.u.'),
                       'm:P:bus1 in MW':('p','MW'),
@@ -319,10 +321,11 @@ def ds_2_dict(results_path):
         if element == 'ElmTerm':
             if not (name in test_dict['bus']):
                 test_dict['bus'].update({name:{}})
+                print(name)
                 test_dict['sys']['buses'] += [name]
                 
             test_dict['bus'][name].update({variable:{'data':data[:,it_col].astype(np.float),'units':units}})  
-        print(element)
+
         if element == 'IntMod':
             if not (name in test_dict['load']):
                 test_dict['load'].update({name:{}})
